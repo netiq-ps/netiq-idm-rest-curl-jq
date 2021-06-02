@@ -1,0 +1,24 @@
+site_name: NetIQ Identity Applications REST API via curl and jq
+
+nav:
+  - README.md
+
+theme:
+  name: material
+  font: false
+
+plugins:
+  - search:
+      prebuild_index: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      use_pygments: false
+
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js
+  - javascripts/config.js
+
+extra_css:
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css
+  - stylesheets/extra.css
