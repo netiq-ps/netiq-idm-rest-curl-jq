@@ -21,14 +21,13 @@ In the OAuth terminology curl (and bash) are a [*client*](https://tools.ietf.org
 The easiest way to register a new OAuth client with OSP (our Authorization Server) is to edit the `ism-configuration.properties` file by hand and add the following three properties:
 
 ```properties
-com.netiq.playgound.clientID = playgound
-com.netiq.playgound.clientPass = secret
-com.netiq.playgound.redirect.url = https://webapp.example.com/oauth.html
+com.example.playground.clientID = playground
+com.example.playground.clientPass = secret
 ```
 
-Choose a `clientID` of your liking and adjust the property names accordingly. `redirect.url` is not relevant for scripts using the resource owner password credentials grant.
+You can choose a `clientID` value and property name prefix (instead of `com.example.playground`) of your liking.
 
-Instead of using a plain text client password in the configuration file, you should generate an obfuscated `clientPass` value with:
+Instead of using a plain text client password in the configuration file, you should generate an obfuscated client secret (`clientPass`) value with:
 
 ```bash
 java -jar /opt/netiq/idm/apps/tomcat/lib/obscurity-*jar "secret"
