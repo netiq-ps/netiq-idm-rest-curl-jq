@@ -44,8 +44,8 @@ In addition to an OAuth client, you also need a user in the Identity Vault. We w
 You need to know your OAuth issuer URL. For OSP installed with NetIQ Identity Manager this defaults to `https://idmapps.example.com:8543/osp/a/idm/auth/oauth2`. From this you can retrieve the OAuth2/OpenID endpoints with:
 
 ```bash
-export BASE_URL="https://idmapps.example.com:8543"
-export OAUTH2_ISSUER="${BASE_URL}/osp/a/idm/auth/oauth2"
+export OSP_BASE_URL="https://idmapps.example.com:8543"
+export OAUTH2_ISSUER="${OSP_BASE_URL}/osp/a/idm/auth/oauth2"
 
 curl -fsS "$OAUTH2_ISSUER/.well-known/openid-configuration" \
   | jq . \
@@ -64,7 +64,7 @@ export INTROSPECTION_ENDPOINT="$(jq -r .introspection_endpoint openid-configurat
 
 ```bash
 export CLIENT_ID="playground"
-read -sp "password for client $CLIENT_ID: " CLIENT_PASSWORD && echo && export CLIENT_PASSWORD
+read -sp "password for client $CLIENT_ID: " CLIENT_SECRET && echo && export CLIENT_SECRET
 ```
 
 ```bash
@@ -80,7 +80,7 @@ Get access and refresh tokens and store them in `token.json`.
 curl -fsS \
   --request POST \
   --url $TOKEN_ENDPOINT \
-  --user "$CLIENT_ID:$CLIENT_PASSWORD" \
+  --user "$CLIENT_ID:$CLIENT_SECRET" \
   --data "grant_type=password" \
   --data "username=$USERNAME" \
   --data "password=$PASSWORD" \
@@ -95,7 +95,7 @@ By deafult, OSP access tokens expire after 60 seconds. To get a new access token
 curl -fsS \
   --request POST \
   --url $TOKEN_ENDPOINT \
-  --user "$CLIENT_ID:$CLIENT_PASSWORD" \
+  --user "$CLIENT_ID:$CLIENT_SECRET" \
   --data "grant_type=refresh_token" \
   --data "refresh_token=$(jq -r .refresh_token token.json)" \
   | jq '.exp = (now + .expires_in | floor) | .exp_date = (.exp | todate)' \
@@ -122,7 +122,7 @@ Introspect access token:
 curl -fsS \
   --request POST \
   --url $INTROSPECTION_ENDPOINT \
-  --user "$CLIENT_ID:$CLIENT_PASSWORD" \
+  --user "$CLIENT_ID:$CLIENT_SECRET" \
   --data "token=$(jq -r .access_token access_token.json)" \
   | jq . # check access token
 ```
@@ -133,7 +133,7 @@ Introspect refresh token and use jq to calculate its remaining life time in a hu
 curl -fsS \
   --request POST \
   --url $INTROSPECTION_ENDPOINT \
-  --user "$CLIENT_ID:$CLIENT_PASSWORD" \
+  --user "$CLIENT_ID:$CLIENT_SECRET" \
   --data "token=$(jq -r .refresh_token token.json)" \
   | jq 'if .exp
     then
@@ -163,7 +163,7 @@ Lists all configured OAuth clients.
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/osp/a/idm/auth/oauth2/metadata" \
+  --url "$OSP_BASE_URL/osp/a/idm/auth/oauth2/metadata" \
   --header "accept: application/json" \
   | jq .
 ```
@@ -172,7 +172,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/osp/s/list" \
+  --url "$OSP_BASE_URL/osp/s/list" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --header "accept: application/json" \
   | jq .
@@ -182,7 +182,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/osp/s/loglevel" \
+  --url "$OSP_BASE_URL/osp/s/loglevel" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --header "accept: application/json" \
   | jq .
@@ -195,7 +195,7 @@ See [JavaDoc](https://docs.oracle.com/javase/8/docs/api/java/util/logging/Level.
 ```bash
 curl -fsS \
   --request PUT \
-  --url "$BASE_URL/osp/s/loglevel" \
+  --url "$OSP_BASE_URL/osp/s/loglevel" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --header "accept: application/json" \
   --header "content-type: application/json" \
@@ -207,7 +207,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/osp/s/restart/idm" \
+  --url "$OSP_BASE_URL/osp/s/restart/idm" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --header "accept: application/json" \
   | jq .
@@ -219,7 +219,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/IDMProv/rest/access/info/version" \
+  --url "$OSP_BASE_URL/IDMProv/rest/access/info/version" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 ```
@@ -228,7 +228,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/IDMProv/rest/admin/driverstatus/info" \
+  --url "$OSP_BASE_URL/IDMProv/rest/admin/driverstatus/info" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 
@@ -238,7 +238,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/IDMProv/rest/admin/logging/list" \
+  --url "$OSP_BASE_URL/IDMProv/rest/admin/logging/list" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 ```
@@ -247,7 +247,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/IDMProv/rest/access/statistics/memoryinfo" \
+  --url "$OSP_BASE_URL/IDMProv/rest/access/statistics/memoryinfo" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 ```
@@ -256,7 +256,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$BASE_URL/IDMProv/rest/access/statistics/threadinfo" \
+  --url "$OSP_BASE_URL/IDMProv/rest/access/statistics/threadinfo" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 ```
@@ -266,7 +266,7 @@ curl -fsS \
 ```bash
 curl -fsS \
   --request DELETE \
-  --url "$BASE_URL/IDMProv/rest/admin/cache/holder/items?cacheHolderID=All%20Cache" \
+  --url "$OSP_BASE_URL/IDMProv/rest/admin/cache/holder/items?cacheHolderID=All%20Cache" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq . # flush all caches
 ```
@@ -359,7 +359,7 @@ See [REST API documentation](https://www.netiq.com/documentation/identity-manage
 ```bash
 curl -fsS \
   --request DELETE \
-  --url "$BASE_URL/IDMDCS-CORE/rpt/collectors/data" \
+  --url "$OSP_BASE_URL/IDMDCS-CORE/rpt/collectors/data" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq . # purge reporting db
 ```
@@ -372,7 +372,7 @@ Every login generates a new refresh token. These are stored in the `oidpInstance
 curl -fsS \
   --request POST \
   --url $REVOCATION_ENDPOINT \
-  --user "$CLIENT_ID:$CLIENT_PASSWORD" \
+  --user "$CLIENT_ID:$CLIENT_SECRET" \
   --data "token_type_hint=refresh_token" \
   --data "token=$(jq -r .refresh_token token.json)" # logout
 ```
