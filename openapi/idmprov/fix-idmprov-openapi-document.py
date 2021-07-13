@@ -24,18 +24,21 @@ log = logging.getLogger(__name__)
 FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 
 
-# Recursivly enumerate JSON (dict) structure to find schema references (https://swagger.io/specification/v2/#schemaObject).
-# There should be no other members other than "$ref". Input document has additional "description" members.
-def removeDescriptionFromSchemaRef(node):
+# Sibling values alongside $refs are ignored. To add properties to a $ref, wrap the $ref into allOf, or move the extra properties into the referenced definition (if applicable).
+# Recursivly enumerate JSON (dict) structure to find references and remove members other than "$ref"
+def removeRefSiblings(node):
     if isinstance(node, dict):
-        for key, value in node.items():
-            if key == "schema" and "$ref" in value:
-                node[key].pop("description", None)
-            elif isinstance(value, dict):
-                removeDescriptionFromSchemaRef(value)
-            elif isinstance(value, list) or isinstance(value, tuple):
-                for v in value:
-                    removeDescriptionFromSchemaRef(v)
+        if "$ref" in node:
+            for key in list(node):
+                if key != "$ref":
+                    del node[key]
+        else:
+            for key, value in node.items():
+                if isinstance(value, dict):
+                    removeRefSiblings(value)
+                elif isinstance(value, list) or isinstance(value, tuple):
+                    for v in value:
+                        removeRefSiblings(v)
 
 
 def main(args):
@@ -113,8 +116,8 @@ def main(args):
     spec["paths"]["/roles/role/assignments/assign"]["post"]["operationId"] = "role_Catalog_assignRoleAssignments_POST"
 
     # attribute paths.'/access/config/helpdesk'(post).[body].description is unexpected
-    # remove description field from schema references
-    removeDescriptionFromSchemaRef(spec)
+    # remove sibling values alongside $refs
+    removeRefSiblings(spec)
 
     # The original base path is set to /IDMProv/rest/access. This is wrong for admin and catalog endpoints. Remove 3rd element from basePath and add it to individual paths instead.
     spec["basePath"] = "/IDMProv/rest"
@@ -123,7 +126,7 @@ def main(args):
         for method in spec["paths"][path]:
             # Determine correct 3rd path element from endpoint's tag and prepend it to existing path
             tag = (spec["paths"][path][method]["tags"][0]).lower()
-            if (not "/" + tag + path in paths):
+            if (not ("/" + tag + path) in paths):
                 paths["/" + tag + path] = {}
             # copy over method definition
             if (method in paths["/" + tag + path]):
