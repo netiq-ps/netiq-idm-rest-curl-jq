@@ -1,2 +1,4 @@
+# site specific configuration data
 openid-configuration.json
 setenv-*.sh
+swagger-*.json
