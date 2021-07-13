@@ -2,3 +2,4 @@
 openid-configuration.json
 setenv-*.sh
 swagger-*.json
+swagger-*.yaml

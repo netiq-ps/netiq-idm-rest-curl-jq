@@ -15,13 +15,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 """
 
 
-import requests
+from argparse import ArgumentParser
 import json
 import logging
-from argparse import ArgumentParser
-from typing import TYPE_CHECKING
+import requests
+import yaml
 log = logging.getLogger(__name__)
 FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+
+
+# Recursivly enumerate JSON (dict) structure to find schema references (https://swagger.io/specification/v2/#schemaObject).
+# There should be no other members other than "$ref". Input document has additional "description" members.
+def removeDescriptionFromSchemaRef(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "schema" and "$ref" in value:
+                node[key].pop("description", None)
+            elif isinstance(value, dict):
+                removeDescriptionFromSchemaRef(value)
+            elif isinstance(value, list) or isinstance(value, tuple):
+                for v in value:
+                    removeDescriptionFromSchemaRef(v)
 
 
 def main(args):
@@ -80,23 +94,55 @@ def main(args):
         spec["security"] = [{"oauth2-password": ["ism"]},
                             {"oauth2-accessCode": ["ism"]}]
 
+    # "attribute paths.'/access/data/migration/workflow'(post).[body].type is unexpected"
+    # If type is "file", the parameter MUST be in "formData". https://swagger.io/specification/v2/#parameterObject
+    # Remove extra parameter alternative with in=body
+    spec["paths"]["/data/migration/workflow"]["post"]["parameters"].pop()
+
+    # fix duplicate operation ids
+    spec["paths"][r"/codeMap/{id}/values"]["get"]["operationId"] = "resource_Access_fetchCodeMapValues_GET"
+    spec["paths"]["/requests/historylist"]["get"]["operationId"] = "resource_Access_getLoggedInUserPermissionRequestHistoryList_GET"
+    spec["paths"]["/featuredItems/categories"]["delete"]["operationId"] = "resource_Access_deleteFeaturedItemsCategories_DELETE"
+    spec["paths"]["/featuredItems/categories"]["post"]["operationId"] = "resource_Access_addFeaturedItemsCategories_POST"
+    spec["paths"]["/featuredItems/categories"]["put"]["operationId"] = "resource_Access_updateFeaturedItemsCategories_PUT"
+    spec["paths"]["/featuredItems"]["put"]["operationId"] = "resource_Access_updateFeaturedItems_PUT"
+    spec["paths"]["/featuredItems"]["post"]["operationId"] = "resource_Access_addFeaturedItems_POST"
+    spec["paths"]["/featuredItems"]["delete"]["operationId"] = "resource_Access_deleteFeaturedItems_DELETE"
+    spec["paths"]["/workflow"]["post"]["operationId"] = "resource_Access_validateCreatePRD_POST"
+    spec["paths"]["/roleCategories"]["get"]["operationId"] = "role_Catalog_searchCategories_GET"
+    spec["paths"]["/roles/role/assignments/assign"]["post"]["operationId"] = "role_Catalog_assignRoleAssignments_POST"
+
+    # attribute paths.'/access/config/helpdesk'(post).[body].description is unexpected
+    # remove description field from schema references
+    removeDescriptionFromSchemaRef(spec)
+
     # The original base path is set to /IDMProv/rest/access. This is wrong for admin and catalog endpoints. Remove 3rd element from basePath and add it to individual paths instead.
     spec["basePath"] = "/IDMProv/rest"
-    # Determine correct 3rd path element from endpoint"s tag and prepend it to existing path
     paths = {}
     for path in spec["paths"]:
         for method in spec["paths"][path]:
+            # Determine correct 3rd path element from endpoint's tag and prepend it to existing path
             tag = (spec["paths"][path][method]["tags"][0]).lower()
-            paths["/" + tag + path] = {}
+            if (not "/" + tag + path in paths):
+                paths["/" + tag + path] = {}
             # copy over method definition
-            paths["/" + tag + path][method] = spec["paths"][path][method]
+            if (method in paths["/" + tag + path]):
+                log.error("/" + tag + path + "(" + method + ") already exists")
+            else:
+                paths["/" + tag + path][method] = spec["paths"][path][method]
             log.debug("processed " + tag + path + " " + method)
     # replace paths object
     spec["paths"] = paths
 
+    log.info("Saving")
+
     # save updated spec
-    with open(args.output, "w") as write_file:
-        json.dump(spec, write_file, indent=2)
+    if args.output.endswith("yaml"):
+        with open(args.output, "w") as yaml_file:
+            yaml.dump(spec, yaml_file, sort_keys=True)
+    else:
+        with open(args.output, "w") as json_file:
+            json.dump(spec, json_file, indent=2, sort_keys=True)
 
     log.info("Wrote update OpenAPI docuement to " + args.output)
 
