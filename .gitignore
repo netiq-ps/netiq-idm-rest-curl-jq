@@ -3,3 +3,10 @@ openid-configuration.json
 setenv-*.sh
 swagger-*.json
 swagger-*.yaml
+
+# vscode
+.vscode/*
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/
