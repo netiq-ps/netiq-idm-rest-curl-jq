@@ -119,13 +119,20 @@ def main(args):
     # remove sibling values alongside $refs
     removeRefSiblings(spec)
 
-    # The original base path is set to /IDMProv/rest/access. This is wrong for admin and catalog endpoints. Remove 3rd element from basePath and add it to individual paths instead.
+    # The original base path is set to /IDMProv/rest/access. This is wrong for admin, catalog, and monitoring endpoints.
+    # Remove 3rd element from basePath and add it to individual paths instead.
     spec["basePath"] = "/IDMProv/rest"
     paths = {}
     for path in spec["paths"]:
         for method in spec["paths"][path]:
+            # fix tag (and path) for health statistics monitoring endpoints
+            # https://www.netiq.com/documentation/identity-manager-48/setup_windows/data/b1biz3l8.html#t41u0zsov9gr
+            if (path.startswith("/statistics")):
+                spec["paths"][path][method]["tags"][0] = "Monitoring"
+
             # Determine correct 3rd path element from endpoint's tag and prepend it to existing path
             tag = (spec["paths"][path][method]["tags"][0]).lower()
+            # create node if necessary
             if (not ("/" + tag + path) in paths):
                 paths["/" + tag + path] = {}
             # copy over method definition
