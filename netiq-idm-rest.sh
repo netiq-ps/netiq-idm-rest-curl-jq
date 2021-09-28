@@ -140,6 +140,10 @@ osp_health () {
     osp_request "GET" "$OSP_BASE_URL/osp/s/health"
 }
 
+osp_clients () {
+    osp_request "GET" "$OSP_BASE_URL/osp/a/idm/auth/oauth2/clientRegistration"
+}
+
 osp_cluster_nodes () {
     osp_request "GET" "$OSP_BASE_URL/osp/s/cluster/nodes"
 }
