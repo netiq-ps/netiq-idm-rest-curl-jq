@@ -18,7 +18,7 @@ While curl is installed even if you select a minimal Linux distribution, jq pack
 
 In the OAuth terminology curl (and bash) are a [*client*](https://tools.ietf.org/html/rfc6749#section-2). We assume you are running on a secure server or workstation with restricted access to the client credentials. Thus we have a *confidential* client.
 
-The easiest way to register a new OAuth client with OSP (our Authorization Server) is to edit the `ism-configuration.properties` file by hand and add the following three properties:
+The easiest way to register a new OAuth client with OSP (our Authorization Server) is to edit the `ism-configuration.properties` file by hand and add the following properties:
 
 ```properties
 com.example.playground.clientID = playground
@@ -27,10 +27,18 @@ com.example.playground.clientPass = secret
 
 You can choose a `clientID` value and property name prefix (instead of `com.example.playground`) of your liking.
 
-Instead of using a plain text client password in the configuration file, you should generate an obfuscated client secret (`clientPass`) value with:
+Instead of using a plain text client secret (`clientPass`) in the configuration file, you should generate an obfuscated value with:
 
 ```bash
 java -jar /opt/netiq/idm/apps/tomcat/lib/obscurity-*jar "secret"
+```
+
+For obfuscated secrets, also add the `clientPass._attr_obscurity` property:
+
+```properties
+com.example.playground.clientID = playground
+com.example.playground.clientPass._attr_obscurity = ENCRYPT
+com.example.playground.clientPass = RUV4kYdFttA3C4hm5eltow==:vrWF02aufnZQeL9toAJyhQ==:GYeEL/1pPjrfxl1B8evASA==
 ```
 
 Restart OSP.
