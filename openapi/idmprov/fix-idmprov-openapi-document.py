@@ -171,7 +171,7 @@ if __name__ == "__main__":
     parser.add_argument("-H", "--hostname", help="Identity Apps hostname (e.g. identityapps.example.com)",
                         metavar="HOSTNAME")
     parser.add_argument(
-        "-p", "--port", help="Identity Apps port", metavar="PORT")
+        "-p", "--port", help="Identity Apps HTTPS port", metavar="PORT")
     parser.add_argument("-i", "--issuer", help="OAuth2 issuer (e.g. https://osp.example.com:8543/osp/a/idm/auth/oauth2)", metavar="URL"
                         )
     args = parser.parse_args()
