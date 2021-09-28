@@ -22,35 +22,32 @@ if (accessTokenTTL > 0) {
 }
 
 // determine if Token Endpoint is set in the environment
-const tokenEndpoint = String(pm.environment.get('token_endpoint'))
-const hasTokenEndpoint = tokenEndpoint.length > 0
-if (!hasTokenEndpoint) {
+const tokenEndpoint = pm.environment.get('token_endpoint')
+if (!tokenEndpoint) {
     throw new Error('No token_endpoint. Check environment.')
 }
 
 // determine if we have all the client credentials needed in the environment
-const hasClientId = String(pm.environment.get('client_id')).length > 0
-if (!hasClientId) {
+const clientID = pm.environment.get('client_id')
+if (!clientID) {
     throw new Error('No client_id. Check environment.')
 }
 
-const hasClientSecret = String(pm.environment.get('client_secret')).length > 0
-if (!hasClientSecret) {
+const clientSecret = pm.environment.get('client_secret')
+if (!clientSecret) {
     throw new Error('No client_secret. Check environment.')
 }
 
-const hasRefreshToken = String(pm.environment.get('refresh_token')).length > 0
-if (!hasRefreshToken) {
+const refreshToken = pm.environment.get('refresh_token')
+if (!refreshToken) {
     // get refresh token
     const username = String(pm.environment.get('username'))
-    const hasUsername = username.length > 0
-    if (!hasUsername) {
+    if (!username) {
         throw new Error('No username. Check environment.')
     }
 
     const password = String(pm.environment.get('password'))
-    const haspassword = password.length > 0
-    if (!hasUsername) {
+    if (!password) {
         throw new Error('No password. Check environment.')
     }
 
@@ -61,10 +58,10 @@ if (!hasRefreshToken) {
         body: {
             mode: 'urlencoded',
             urlencoded: [
-                { key: 'client_id', value: pm.environment.get('client_id'), disabled: false },
-                { key: 'client_secret', value: pm.environment.get('client_secret'), disabled: false },
-                { key: 'username', value: pm.environment.get('username'), disabled: false },
-                { key: 'password', value: pm.environment.get('password'), disabled: false },
+                { key: 'client_id', value: clientID, disabled: false },
+                { key: 'client_secret', value: clientSecret, disabled: false },
+                { key: 'username', value: username, disabled: false },
+                { key: 'password', value: password, disabled: false },
                 { key: 'grant_type', value: 'password', disabled: false }
             ]
         }
@@ -89,14 +86,14 @@ if (!hasRefreshToken) {
             }
             pm.environment.set('expires_at', newExpiresAt)
 
-            console.info('Stored refresh token.')
+            console.log('Stored refresh token.')
         }
     })
 
     return
 }
 
-// send a new API request to refresh the access token
+// refresh access token
 // console.log('refreshing token with ' + tokenEndpoint);
 pm.sendRequest({
     url: tokenEndpoint,
@@ -105,9 +102,9 @@ pm.sendRequest({
     body: {
         mode: 'urlencoded',
         urlencoded: [
-            { key: 'client_id', value: pm.environment.get('client_id'), disabled: false },
-            { key: 'client_secret', value: pm.environment.get('client_secret'), disabled: false },
-            { key: 'refresh_token', value: pm.environment.get('refresh_token'), disabled: false },
+            { key: 'client_id', value: clientID, disabled: false },
+            { key: 'client_secret', value: clientSecret, disabled: false },
+            { key: 'refresh_token', value: refreshToken, disabled: false },
             { key: 'grant_type', value: 'refresh_token', disabled: false }
         ]
     }
@@ -118,7 +115,7 @@ pm.sendRequest({
         throw new Error('Could not refresh the access token: ' + JSON.stringify(error))
     } else if (response.json().error) {
         console.error(response.json())
-        throw new Error('Could not refresh the access token: ' + response.json().error)
+        throw new Error('Could not refresh the access token: ' + response.json().error_description + ' Delete refresh_token from environment if it is expired.')
     } else {
         // otherwise, fetch the new access token and store it
         const data = response.json()
@@ -129,9 +126,10 @@ pm.sendRequest({
         pm.environment.set('access_token', data.access_token)
         if ('refresh_token' in data) {
             pm.environment.set('refresh_token', data.refresh_token)
+            console.log('Stored refresh token.')
         }
         pm.environment.set('expires_at', newExpiresAt)
 
-        console.info('Refreshed access token.')
+        console.log('Refreshed access token.')
     }
 })
