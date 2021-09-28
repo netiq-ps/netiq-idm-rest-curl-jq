@@ -1,0 +1,846 @@
+{
+	"info": {
+		"_postman_id": "5349f57b-080b-4acd-a87b-b61a0ab1e5b7",
+		"name": "Micro Focus OneSSO Provider",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "public",
+			"item": [
+				{
+					"name": "openid-configuration",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/a/{{tenant}}/auth/oauth2/.well-known/openid-configuration",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"a",
+								"{{tenant}}",
+								"auth",
+								"oauth2",
+								".well-known",
+								"openid-configuration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "oauth-authorization-server",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/a/{{tenant}}/auth/oauth2/.well-known/oauth-authorization-server",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"a",
+								"{{tenant}}",
+								"auth",
+								"oauth2",
+								".well-known",
+								"oauth-authorization-server"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "metadata",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/a/{{tenant}}/auth/oauth2/metadata",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"a",
+								"{{tenant}}",
+								"auth",
+								"oauth2",
+								"metadata"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SAML service provider metadata",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/a/{{tenant}}/auth/saml2/spmetadata",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"a",
+								"{{tenant}}",
+								"auth",
+								"saml2",
+								"spmetadata"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "monitoring",
+			"item": [
+				{
+					"name": "Get a list of system-wide status indicators Copy",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/list",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get system health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/health",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List known cluster nodes' addresses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/cluster/nodes",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"cluster",
+								"nodes"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "config",
+			"item": [
+				{
+					"name": "Get system configuration (as zip file)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get effective (post-property-replacement) system XML configuration",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/xml",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/get",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"get"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get tenant configuration (as zip file)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/{{tenant}}/get",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"{{tenant}}",
+								"get"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get system-wide logging level",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/loglevel",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"loglevel"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "manage",
+			"item": [
+				{
+					"name": "Cause the container to reload the OSP context",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/reload",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"reload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Restart system",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/restart",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"restart"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Restart tenant",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/restart/{{tenant}}",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"restart",
+								"{{tenant}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set the framework logging level",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"level\": \"ALL\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{osp_base_url}}/osp/s/loglevel",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"s",
+								"loglevel"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "ALL",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"level\": \"ALL\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{osp_base_url}}/osp/s/loglevel",
+									"host": [
+										"{{osp_base_url}}"
+									],
+									"path": [
+										"osp",
+										"s",
+										"loglevel"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "INFO",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"level\": \"INFO\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{osp_base_url}}/osp/s/loglevel",
+									"host": [
+										"{{osp_base_url}}"
+									],
+									"path": [
+										"osp",
+										"s",
+										"loglevel"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "oauth2",
+			"item": [
+				{
+					"name": "userinfo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{osp_base_url}}/osp/a/{{tenant}}/auth/oauth2/userinfo",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"a",
+								"{{tenant}}",
+								"auth",
+								"oauth2",
+								"userinfo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "introspect refresh token",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{client_secret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{client_id}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "token={{refresh_token}}"
+						},
+						"url": {
+							"raw": "{{osp_base_url}}/osp/a/{{tenant}}/auth/oauth2/introspect",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"a",
+								"{{tenant}}",
+								"auth",
+								"oauth2",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "introspect access token",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{client_secret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{client_id}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "token={{access_token}}"
+						},
+						"url": {
+							"raw": "{{osp_base_url}}/osp/a/{{tenant}}/auth/oauth2/introspect",
+							"host": [
+								"{{osp_base_url}}"
+							],
+							"path": [
+								"osp",
+								"a",
+								"{{tenant}}",
+								"auth",
+								"oauth2",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "clientSecret",
+				"value": "{{client_secret}}",
+				"type": "string"
+			},
+			{
+				"key": "challengeAlgorithm",
+				"value": "S256",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{username}}",
+				"type": "string"
+			},
+			{
+				"key": "password",
+				"value": "{{password}}",
+				"type": "string"
+			},
+			{
+				"key": "grant_type",
+				"value": "password_credentials",
+				"type": "string"
+			},
+			{
+				"key": "clientId",
+				"value": "{{client_id}}",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			},
+			{
+				"key": "client_authentication",
+				"value": "header",
+				"type": "string"
+			},
+			{
+				"key": "accessTokenUrl",
+				"value": "{{osp_base_url}}/osp/a/{{tenant}}/auth/oauth2/token",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"",
+					"/*",
+					" * if the access token expired and auto refresh has been set, use the refresh",
+					" * token to create a new access token",
+					" * if no refresh token is available, execute Resource Owner Password Credentials grant request",
+					" * TODO: handle expired refresh token",
+					" */",
+					"",
+					"// determine if the user has auto-refresh enabled",
+					"const autoRefresh = String(pm.environment.get('enable_auto_refresh_access_token')) === 'true'",
+					"if (!autoRefresh) {",
+					"    console.warn(\"autoRefresh is disabled.\")",
+					"    return",
+					"}",
+					"",
+					"// determine if the Access Token has expired",
+					"const expiresAt = pm.environment.get('expires_at')",
+					"const accessTokenTTL = Number(expiresAt) - Date.now()",
+					"if (accessTokenTTL > 0) {",
+					"    console.log(\"Access token is still valid for \" + (Number(expiresAt) - Date.now()) + \" ms. Skipping refresh.\")",
+					"    return",
+					"}",
+					"",
+					"// determine if Token Endpoint is set in the environment",
+					"const tokenEndpoint = pm.environment.get('token_endpoint')",
+					"if (!tokenEndpoint) {",
+					"    throw new Error('No token_endpoint. Check environment.')",
+					"}",
+					"",
+					"// determine if we have all the client credentials needed in the environment",
+					"const clientID = pm.environment.get('client_id')",
+					"if (!clientID) {",
+					"    throw new Error('No client_id. Check environment.')",
+					"}",
+					"",
+					"const clientSecret = pm.environment.get('client_secret')",
+					"if (!clientSecret) {",
+					"    throw new Error('No client_secret. Check environment.')",
+					"}",
+					"",
+					"const refreshToken = pm.environment.get('refresh_token')",
+					"if (!refreshToken) {",
+					"    // get refresh token",
+					"    const username = String(pm.environment.get('username'))",
+					"    if (!username) {",
+					"        throw new Error('No username. Check environment.')",
+					"    }",
+					"",
+					"    const password = String(pm.environment.get('password'))",
+					"    if (!password) {",
+					"        throw new Error('No password. Check environment.')",
+					"    }",
+					"",
+					"    pm.sendRequest({",
+					"        url: tokenEndpoint,",
+					"        method: 'POST',",
+					"        headers: { 'Content-Type': 'Content-Type: application/x-www-form-urlencoded' },",
+					"        body: {",
+					"            mode: 'urlencoded',",
+					"            urlencoded: [",
+					"                { key: 'client_id', value: clientID, disabled: false },",
+					"                { key: 'client_secret', value: clientSecret, disabled: false },",
+					"                { key: 'username', value: username, disabled: false },",
+					"                { key: 'password', value: password, disabled: false },",
+					"                { key: 'grant_type', value: 'password', disabled: false }",
+					"            ]",
+					"        }",
+					"    }, function (error, response) {",
+					"        if (error) {",
+					"            // if an error occured, log the error and raise a message to the user.",
+					"            console.error(error)",
+					"            throw new Error('Could not get the refresh token: ' + JSON.stringify(error))",
+					"        } else if (response.json().error) {",
+					"            console.error(response.json())",
+					"            throw new Error('Could not get the refresh token: ' + response.json().error)",
+					"        } else {",
+					"            // otherwise, fetch the new tokens and store it",
+					"            const data = response.json()",
+					"",
+					"            // determine when this token is set to expire at",
+					"            const newExpiresAt = Date.now() + data.expires_in * 1000",
+					"            // store the new variables in the environment",
+					"            pm.environment.set('access_token', data.access_token)",
+					"            if ('refresh_token' in data) {",
+					"                pm.environment.set('refresh_token', data.refresh_token)",
+					"            }",
+					"            pm.environment.set('expires_at', newExpiresAt)",
+					"",
+					"            console.log('Stored refresh token.')",
+					"        }",
+					"    })",
+					"",
+					"    return",
+					"}",
+					"",
+					"// refresh access token",
+					"// console.log('refreshing token with ' + tokenEndpoint);",
+					"pm.sendRequest({",
+					"    url: tokenEndpoint,",
+					"    method: 'POST',",
+					"    headers: { 'Content-Type': 'Content-Type: application/x-www-form-urlencoded' },",
+					"    body: {",
+					"        mode: 'urlencoded',",
+					"        urlencoded: [",
+					"            { key: 'client_id', value: clientID, disabled: false },",
+					"            { key: 'client_secret', value: clientSecret, disabled: false },",
+					"            { key: 'refresh_token', value: refreshToken, disabled: false },",
+					"            { key: 'grant_type', value: 'refresh_token', disabled: false }",
+					"        ]",
+					"    }",
+					"}, function (error, response) {",
+					"    if (error) {",
+					"        // if an error occured, log the error and raise a message to the user.",
+					"        console.error(error)",
+					"        throw new Error('Could not refresh the access token: ' + JSON.stringify(error))",
+					"    } else if (response.json().error) {",
+					"        console.error(response.json())",
+					"        throw new Error('Could not refresh the access token: ' + response.json().error_description + ' Delete refresh_token from environment if it is expired.')",
+					"    } else {",
+					"        // otherwise, fetch the new access token and store it",
+					"        const data = response.json()",
+					"",
+					"        // determine when this token is set to expire at",
+					"        const newExpiresAt = Date.now() + data.expires_in * 1000",
+					"        // store the new variables in the environment",
+					"        pm.environment.set('access_token', data.access_token)",
+					"        if ('refresh_token' in data) {",
+					"            pm.environment.set('refresh_token', data.refresh_token)",
+					"            console.log('Stored refresh token.')",
+					"        }",
+					"        pm.environment.set('expires_at', newExpiresAt)",
+					"",
+					"        console.log('Refreshed access token.')",
+					"    }",
+					"})",
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "osp_base_url",
+			"value": "https://osp.example.com"
+		},
+		{
+			"key": "tenant",
+			"value": "idm"
+		}
+	]
+}
