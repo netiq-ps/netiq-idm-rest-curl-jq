@@ -129,6 +129,8 @@ osp_request () {
     --url "$2" \
     --header "authorization: $(jq -r '.token_type + " " + .access_token' $ACCESS_TOKEN_FILE)" \
     --header "accept: application/json" \
+    --header "content-type: application/json" \
+    --data "$3" \
     | jq .
 }
 
@@ -150,6 +152,10 @@ osp_cluster_nodes () {
 
 osp_get_loglevel () {
     osp_request "GET" "$OSP_BASE_URL/osp/s/loglevel"
+}
+
+osp_set_loglevel () {
+    osp_request "PUT" "$OSP_BASE_URL/osp/s/loglevel" '{"level":"'$1'"}'
 }
 
 # Set framework logging configuration to the most verbose level.
