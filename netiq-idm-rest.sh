@@ -213,10 +213,10 @@ idmprov_user_rights () {
     idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/access/info/user/rights"
 }
 
-idmprov_roles () {
+idmprov_list_roles () {
     idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/catalog/roles/listV2?$1"
 }
 
-idmprov_users () {
+idmprov_list_users () {
     idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/access/users/list?$1"
 }
