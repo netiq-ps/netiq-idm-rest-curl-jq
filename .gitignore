@@ -3,6 +3,7 @@ openid-configuration.json
 setenv-*.sh
 swagger-*.json
 swagger-*.yaml
+config.jar
 
 # vscode
 .vscode/*
