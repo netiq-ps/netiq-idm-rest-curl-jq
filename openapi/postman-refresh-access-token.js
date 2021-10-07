@@ -1,9 +1,9 @@
 
 /*
- * if the access token expired and auto refresh has been set, use the refresh
- * token to create a new access token
- * if no refresh token is available, execute Resource Owner Password Credentials grant request
- * TODO: handle expired refresh token
+ * Get access token using Resource Owner Password Credentials grant.
+ * Automatically refresh it if expired.
+ * Set Collection -> Authorization -> Current Token -> Access Token to {{access_token}}
+ * TODO: programatically handle expired refresh token
  */
 
 // determine if the user has auto-refresh enabled
@@ -40,7 +40,8 @@ if (!clientSecret) {
 
 const refreshToken = pm.environment.get('refresh_token')
 if (!refreshToken) {
-    // get refresh token
+    // get refresh token using Resource Owner Password Credentials grant
+    
     const username = String(pm.environment.get('username'))
     if (!username) {
         throw new Error('No username. Check environment.')
@@ -74,16 +75,17 @@ if (!refreshToken) {
             console.error(response.json())
             throw new Error('Could not get the refresh token: ' + response.json().error)
         } else {
-            // otherwise, fetch the new tokens and store it
+            // otherwise, update tokens
             const data = response.json()
 
-            // determine when this token is set to expire at
-            const newExpiresAt = Date.now() + data.expires_in * 1000
-            // store the new variables in the environment
+            // store the new tokens in the environment
             pm.environment.set('access_token', data.access_token)
             if ('refresh_token' in data) {
                 pm.environment.set('refresh_token', data.refresh_token)
             }
+
+            // determine when access token is set to expire at
+            const newExpiresAt = Date.now() + data.expires_in * 1000
             pm.environment.set('expires_at', newExpiresAt)
 
             console.log('Stored refresh token.')
@@ -117,17 +119,18 @@ pm.sendRequest({
         console.error(response.json())
         throw new Error('Could not refresh the access token: ' + response.json().error_description + ' Delete refresh_token from environment if it is expired.')
     } else {
-        // otherwise, fetch the new access token and store it
+        // otherwise, update tokens
         const data = response.json()
 
-        // determine when this token is set to expire at
-        const newExpiresAt = Date.now() + data.expires_in * 1000
-        // store the new variables in the environment
+        // store the new tokens in the environment
         pm.environment.set('access_token', data.access_token)
         if ('refresh_token' in data) {
             pm.environment.set('refresh_token', data.refresh_token)
             console.log('Stored refresh token.')
         }
+
+        // determine when access token is set to expire at
+        const newExpiresAt = Date.now() + data.expires_in * 1000
         pm.environment.set('expires_at', newExpiresAt)
 
         console.log('Refreshed access token.')
