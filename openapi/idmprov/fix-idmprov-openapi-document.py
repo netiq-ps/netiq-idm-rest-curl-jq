@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fix issues in the NetIQ Identity Applications OpenAPI document.
 
-This script fixes issues in swagger.json. It can also add security and server settings to make easily consumable by API tools such as Postman or Swagger.
+This script fixes issues in swagger.json. It can also add security and server settings to make the document easily consumable by API tools such as Postman or Swagger.
 """
 
 """
