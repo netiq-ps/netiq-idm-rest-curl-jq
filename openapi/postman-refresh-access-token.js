@@ -1,10 +1,16 @@
-
 /*
- * Get access token using Resource Owner Password Credentials grant.
- * Automatically refresh it if expired.
+ * Postman pre-request script to get access tokens using the Resource Owner Password Credentials grant.
+ * Automatically refreshes acces token if expired.
+ * 
+ * Put the code into Collection -> Pre-request Script 
  * Set Collection -> Authorization -> Current Token -> Access Token to {{access_token}}
  * TODO: programatically handle expired refresh token
  */
+
+// skip if trying to retrieve .well-known meta-data
+if (pm.info.requestName == 'openid-configuration') {
+    return
+}
 
 // determine if the user has auto-refresh enabled
 const autoRefresh = String(pm.environment.get('enable_auto_refresh_access_token')) === 'true'
@@ -117,7 +123,7 @@ pm.sendRequest({
         throw new Error('Could not refresh the access token: ' + JSON.stringify(error))
     } else if (response.json().error) {
         console.error(response.json())
-        throw new Error('Could not refresh the access token: ' + response.json().error_description + ' Delete refresh_token from environment if it is expired.')
+        throw new Error('Could not refresh the access token: ' + response.json().error_description + ' Delete refresh_token from environment if it is expired and retry.')
     } else {
         // otherwise, update tokens
         const data = response.json()
