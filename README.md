@@ -95,6 +95,8 @@ curl -fsS \
   -o token.json # login
 ```
 
+**Note:** Don't forget to [logout](#logout) when done.
+
 ### Refresh access token
 
 By deafult, OSP access tokens expire after 60 seconds. To get a new access token and store it in `access_token.json` (to avoid overwriting your refresh token) use:
