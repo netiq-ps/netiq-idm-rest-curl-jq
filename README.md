@@ -281,48 +281,50 @@ curl -fsS \
   | jq . # flush all caches
 ```
 
-### Start PRD
+### Start a Workflow (PRD)
 
-Use following minimal JSON structure to start workflow assuming that your workflow is named `testWF2` and it has two parameters named `sample1` and `sample2`:
+To start a workflow with the dedicated workflow engine in IDM 4.8, you need to use the `/IDMProv/rest/access/requests/permissions/v2` endoint.
+
+To start a workflow `SampleWF` with one additional parameter named `sample1`, `POST` the following JSON :
 
 ```json
 {
-    "id":"cn=testWF2,cn=RequestDefs,cn=AppConfig,cn=User Application Driver,cn=driverset1,o=system",
-    "entityType":"prd",
-    "effDate": "",
-    "expDate": "",
-    "reason":"Just reason",
-    "dataItems": [
+    "reqPermissions": [
         {
-            "name": "sample1",
-            "dataType": "string",
-            "valueType": 2,
-            "readOnly": false,
-            "multiValued": "false",
-            "values": [
-                "something1"
+            "id": "cn=SampleWF,cn=RequestDefs,cn=AppConfig,cn=User Application Driver,cn=driverset1,o=system",
+            "entityType": "PRD"
+        }
+    ],
+    "data": [
+        {
+            "key": "reason",
+            "value": [
+                "test reason"
             ]
         },
         {
-            "name": "sample2",
-            "dataType": "string",
-            "valueType": 2,
-            "readOnly": false,
-            "multiValued": "false",
-            "values": [
-                "something2"
-            ]
-        },
-        {
-            "name": "recipient",
-            "dataType": "dn",
-            "valueType": 2,
-            "readOnly": true,
-            "multiValued": "false",
-            "values": [
+            "key": "recipient",
+            "value": [
                 "cn=uaadmin,ou=sa,o=data"
             ]
+        },
+        {
+            "key": "sample",
+            "value": [
+                "sample"
+            ]
         }
+    ]
+}
+```
+
+Multiple values for a parameter must be serialized as JSON array. he resulting string value must then be used as first array element of the `value` property:
+
+```json
+{
+    "key": "userList",
+    "value": [
+        "[\"cn=David,o=data\",\"cn=Alen,o=data\"]"
     ]
 }
 ```
@@ -332,31 +334,82 @@ As result you should get following response:
 ```json
 {
     "success": true,
+    "OperationNodes": [
+        {
+            "success": true,
     "succeeded": [
         {
-            "id": "cn=testWF2,cn=RequestDefs,cn=AppConfig,cn=User Application Driver,cn=driverset1,o=system",
-            "instanceId": "22fb8d77a537413e9a7387f1700ba2c9"
+                    "id": "cn=SampleWF,cn=RequestDefs,cn=AppConfig,cn=User Application Driver,cn=driverset1,o=system",
+                    "requestId": "cd48b6808dfb4cc7a554c9b4aa32031a"
+                }
+            ],
+            "userDn": "cn=uaadmin,ou=sa,o=data"
         }
     ]
 }
 ```
 
-Where instanceID is unique identifier of started workflow (easy to find in catalina.out).
+Where `requestId` is unique identifier of started workflow instance.
 
 #### Additional Information
 
-If you need to check actual parameters of your PRD use `/IDMProv/rest/access/permissions/item` endpoint and sent following JSON structure:
+If you need to get actual parameters of your non-JSON-form PRD, use the `/IDMProv/rest/access/permissions/item` endpoint and `POST` following JSON structure:
 
 ```json
 {
-  "id":"cn=testWF2,cn=RequestDefs,cn=AppConfig,cn=User Application Driver,cn=driverset1,o=system",
+  "id":"cn=SampleWF,cn=RequestDefs,cn=AppConfig,cn=User Application Driver,cn=driverset1,o=system",
   "entityType":"prd"
 }
 ```
 
-You will get full details about your workflow with parameters required to send - just copy&paste them to JSON for `/IDMProv/rest/access/requests/permissions/item` request, add some values like in sample above and you are done.
+You you can find the parameters in the `dataItems` property of the response body:
 
-Remark: all endpoints mentioned above (/IDMProv/rest/access/requests/permissions/item, /IDMProv/rest/access/permissions/item, /IDMProv/rest/access/requests/permissions) are intended for the `POST` method.
+```json
+{
+    "id": "cn=samplewf,cn=requestdefs,cn=appconfig,cn=user application driver,cn=driverset1,o=system",
+    "dn": "cn=SampleWF,cn=RequestDefs,cn=AppConfig,cn=User Application Driver,cn=driverset1,o=system",
+    "name": "SampleWF",
+    "desc": "SampleWF",
+    "entityType": "prd",
+    "bulkRequestable": false,
+    "categories": [
+        "Custom Templates"
+    ],
+    "link": "/IDMProv/rest/access/permissions/item",
+    "multiAssignable": true,
+    "excluded": false,
+    "requestForm": "PD9...",
+    "dataItems": [
+        {
+            "name": "reason",
+            "dataType": "string",
+            "valueType": 2,
+            "readOnly": false,
+            "multiValued": "false",
+            "valueSet": "false"
+        },
+        {
+            "name": "recipient",
+            "dataType": "dn",
+            "valueType": 2,
+            "readOnly": false,
+            "multiValued": "false",
+            "valueSet": "false"
+        },
+        {
+            "name": "sample",
+            "dataType": "string",
+            "valueType": 2,
+            "readOnly": false,
+            "multiValued": "false",
+            "valueSet": "false"
+        }
+    ],
+    "edition": "rbpm.prd.1667987236179",
+    "isNewForm": false,
+    "isExpirationRequired": "false"
+}
+```
 
 ### More
 
