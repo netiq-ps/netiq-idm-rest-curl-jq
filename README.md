@@ -66,6 +66,8 @@ export REVOCATION_ENDPOINT="$(jq -r .revocation_endpoint openid-configuration.js
 export INTROSPECTION_ENDPOINT="$(jq -r .introspection_endpoint openid-configuration.json)"
 ```
 
+Note: To check if OSP is reachable (e.g. by a load balancer) use the URL `https://${OSP_BASE_URL}/osp/a/idm/auth/app/ping`.
+
 ## Authentication
 
 ### Setup environment
