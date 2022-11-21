@@ -273,6 +273,21 @@ curl -fsS \
   | jq .
 ```
 
+### [CodeMap refresh for a single Entitlement](https://www.netiq.com/documentation/identity-manager-developer/rest-api-documentation/idmappsdoc/#/Catalog/resource_Catalog_entitlementRefresh_POST)
+
+```bash
+curl -fsS \
+  --url "$OSP_BASE_URL/IDMProv/rest/catalog/codemaprefresh/entitlement" \
+  --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
+  --data-raw '{
+    "entitlements": [
+        {
+            "id": "cn=role,cn=rest-sentinel,cn=driverset1,o=system"
+        }
+    ]
+}'  | jq . # codemap refresh
+```
+
 ### [Flush cache](https://www.netiq.com/documentation/identity-manager-developer/rest-api-documentation/idmappsdoc/#/Admin/resource_Admin_flushCacheByHolderID_DELETE)
 
 ```bash
