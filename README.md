@@ -49,11 +49,16 @@ In addition to an OAuth client, you also need a user in the Identity Vault. We w
 
 ### Endpoints
 
-You need to know your OAuth issuer URL. For OSP installed with NetIQ Identity Manager this defaults to `https://idmapps.example.com:8543/osp/a/idm/auth/oauth2`. From this you can retrieve the OAuth2/OpenID endpoints with:
+You need to know where OSP is deployed to get your OAuth endpoints. In a NetIQ Identity Manager quick start install, OSP is installed on the Identity Applications Tomcat running https on port 8543:
 
 ```bash
-export OSP_BASE_URL="https://idmapps.example.com:8543"
-export OAUTH2_ISSUER="${OSP_BASE_URL}/osp/a/idm/auth/oauth2"
+export OSP_ORIGIN="https://idmapps.example.com:8543"
+```
+
+With this you can retrieve the OAuth2/OpenID endpoints with:
+
+```bash
+export OAUTH2_ISSUER="${OSP_ORIGIN}/osp/a/idm/auth/oauth2"
 
 curl -fsS "$OAUTH2_ISSUER/.well-known/openid-configuration" \
   | jq . \
@@ -66,7 +71,7 @@ export REVOCATION_ENDPOINT="$(jq -r .revocation_endpoint openid-configuration.js
 export INTROSPECTION_ENDPOINT="$(jq -r .introspection_endpoint openid-configuration.json)"
 ```
 
-Note: To check if OSP is reachable (e.g. by a load balancer) use the URL `https://${OSP_BASE_URL}/osp/a/idm/auth/app/ping`.
+Note: To check if OSP is reachable (e.g. by a load balancer) use the URL `https://${OSP_ORIGIN}/osp/a/idm/auth/app/ping`.
 
 ## Authentication
 
@@ -175,7 +180,7 @@ Lists all configured OAuth clients.
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/osp/a/idm/auth/oauth2/metadata" \
+  --url "$OSP_ORIGIN/osp/a/idm/auth/oauth2/metadata" \
   --header "accept: application/json" \
   | jq .
 ```
@@ -184,7 +189,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/osp/s/list" \
+  --url "$OSP_ORIGIN/osp/s/list" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --header "accept: application/json" \
   | jq .
@@ -194,7 +199,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/osp/s/loglevel" \
+  --url "$OSP_ORIGIN/osp/s/loglevel" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --header "accept: application/json" \
   | jq .
@@ -207,7 +212,7 @@ See [JavaDoc](https://docs.oracle.com/javase/8/docs/api/java/util/logging/Level.
 ```bash
 curl -fsS \
   --request PUT \
-  --url "$OSP_BASE_URL/osp/s/loglevel" \
+  --url "$OSP_ORIGIN/osp/s/loglevel" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --header "accept: application/json" \
   --header "content-type: application/json" \
@@ -219,7 +224,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/osp/s/restart/idm" \
+  --url "$OSP_ORIGIN/osp/s/restart/idm" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --header "accept: application/json" \
   | jq .
@@ -231,7 +236,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/IDMProv/rest/access/info/version" \
+  --url "$IDMPROV_ORIGIN/IDMProv/rest/access/info/version" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 ```
@@ -240,7 +245,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/IDMProv/rest/admin/driverstatus/info" \
+  --url "$IDMPROV_ORIGIN/IDMProv/rest/admin/driverstatus/info" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 
@@ -250,7 +255,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/IDMProv/rest/admin/logging/list" \
+  --url "$IDMPROV_ORIGIN/IDMProv/rest/admin/logging/list" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 ```
@@ -259,7 +264,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/IDMProv/rest/access/statistics/memoryinfo" \
+  --url "$IDMPROV_ORIGIN/IDMProv/rest/access/statistics/memoryinfo" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 ```
@@ -268,7 +273,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/IDMProv/rest/access/statistics/threadinfo" \
+  --url "$IDMPROV_ORIGIN/IDMProv/rest/access/statistics/threadinfo" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq .
 ```
@@ -277,7 +282,7 @@ curl -fsS \
 
 ```bash
 curl -fsS \
-  --url "$OSP_BASE_URL/IDMProv/rest/catalog/codemaprefresh/entitlement" \
+  --url "$IDMPROV_ORIGIN/IDMProv/rest/catalog/codemaprefresh/entitlement" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   --data-raw '{
     "entitlements": [
@@ -293,7 +298,7 @@ curl -fsS \
 ```bash
 curl -fsS \
   --request DELETE \
-  --url "$OSP_BASE_URL/IDMProv/rest/admin/cache/holder/items?cacheHolderID=All%20Cache" \
+  --url "$IDMPROV_ORIGIN/IDMProv/rest/admin/cache/holder/items?cacheHolderID=All%20Cache" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq . # flush all caches
 ```
@@ -354,8 +359,8 @@ As result you should get following response:
     "OperationNodes": [
         {
             "success": true,
-    "succeeded": [
-        {
+            "succeeded": [
+                {
                     "id": "cn=SampleWF,cn=RequestDefs,cn=AppConfig,cn=User Application Driver,cn=driverset1,o=system",
                     "requestId": "cd48b6808dfb4cc7a554c9b4aa32031a"
                 }
@@ -439,7 +444,7 @@ See [REST API documentation](https://www.netiq.com/documentation/identity-manage
 ```bash
 curl -fsS \
   --request DELETE \
-  --url "$OSP_BASE_URL/IDMDCS-CORE/rpt/collectors/data" \
+  --url "$RPT_ORIGIN/IDMDCS-CORE/rpt/collectors/data" \
   --header "authorization: $(jq -r '.token_type + " " + .access_token' access_token.json)" \
   | jq . # purge reporting db
 ```

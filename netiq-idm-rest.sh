@@ -135,47 +135,48 @@ osp_request () {
 }
 
 osp_status () {
-    osp_request "GET" "$OSP_BASE_URL/osp/s/list"
+    osp_request "GET" "$OSP_ORIGIN/osp/s/list"
 }
 
 osp_health () {
-    osp_request "GET" "$OSP_BASE_URL/osp/s/health"
+    osp_request "GET" "$OSP_ORIGIN/osp/s/health"
 }
 
+# only available if dynamic client registration is enabled
 osp_clients () {
-    osp_request "GET" "$OSP_BASE_URL/osp/a/idm/auth/oauth2/clientRegistration"
+    osp_request "GET" "$OSP_ORIGIN/osp/a/idm/auth/oauth2/clientRegistration"
 }
 
 osp_cluster_nodes () {
-    osp_request "GET" "$OSP_BASE_URL/osp/s/cluster/nodes"
+    osp_request "GET" "$OSP_ORIGIN/osp/s/cluster/nodes"
 }
 
 osp_get_loglevel () {
-    osp_request "GET" "$OSP_BASE_URL/osp/s/loglevel"
+    osp_request "GET" "$OSP_ORIGIN/osp/s/loglevel"
 }
 
 osp_set_loglevel () {
-    osp_request "PUT" "$OSP_BASE_URL/osp/s/loglevel" '{"level":"'$1'"}'
+    osp_request "PUT" "$OSP_ORIGIN/osp/s/loglevel" '{"level":"'$1'"}'
 }
 
 # Set framework logging configuration to the most verbose level.
 osp_verbose_logging () {
-    osp_request "GET" "$OSP_BASE_URL/osp/s/verboseLogging"
+    osp_request "GET" "$OSP_ORIGIN/osp/s/verboseLogging"
 }
 
 # Revert framework logging level to the level specified by configuration.
 osp_reset_loglevel () {
-    osp_request "GET" "$OSP_BASE_URL/osp/s/revertLogging"
+    osp_request "GET" "$OSP_ORIGIN/osp/s/revertLogging"
 }
 
 # Restart system.
 osp_restart () {
-    osp_request "GET" "$OSP_BASE_URL/osp/s/restart"
+    osp_request "GET" "$OSP_ORIGIN/osp/s/restart"
 }
 
 # Cause the container (tomcat or jetty) to reload the OSP context.
 osp_reload () {
-    osp_request "GET" "$OSP_BASE_URL/osp/s/reload"
+    osp_request "GET" "$OSP_ORIGIN/osp/s/reload"
 }
 
 
@@ -192,31 +193,31 @@ idmprov_request () {
 }
 
 idmprov_version () {
-    idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/access/info/version"
+    idmprov_request "GET" "$IDMPROV_ORIGIN/IDMProv/rest/access/info/version"
 }
 
 idmprov_driverstatus () {
-    idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/admin/driverstatus/info"
+    idmprov_request "GET" "$IDMPROV_ORIGIN/IDMProv/rest/admin/driverstatus/info"
 }
 
 idmprov_cacheinfo () {
-    idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/catalog/statistics/cacheinfo"
+    idmprov_request "GET" "$IDMPROV_ORIGIN/IDMProv/rest/catalog/statistics/cacheinfo"
 }
 
 idmprov_flush_cache () {
-    idmprov_request "DELETE" "$IDMPROV_BASE_URL/IDMProv/rest/admin/cache/holder/items?cacheHolderID=All%20Cache"
+    idmprov_request "DELETE" "$IDMPROV_ORIGIN/IDMProv/rest/admin/cache/holder/items?cacheHolderID=All%20Cache"
 }
 
 
 
 idmprov_user_rights () {
-    idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/access/info/user/rights"
+    idmprov_request "GET" "$IDMPROV_ORIGIN/IDMProv/rest/access/info/user/rights"
 }
 
 idmprov_list_roles () {
-    idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/catalog/roles/listV2?$1"
+    idmprov_request "GET" "$IDMPROV_ORIGIN/IDMProv/rest/catalog/roles/listV2?$1"
 }
 
 idmprov_list_users () {
-    idmprov_request "GET" "$IDMPROV_BASE_URL/IDMProv/rest/access/users/list?$1"
+    idmprov_request "GET" "$IDMPROV_ORIGIN/IDMProv/rest/access/users/list?$1"
 }
