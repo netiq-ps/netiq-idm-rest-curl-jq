@@ -39,14 +39,14 @@ if (!clientID) {
     throw new Error('No client_id. Check environment.')
 }
 
-const clientSecret = pm.environment.get('client_secret')
-if (!clientSecret) {
-    throw new Error('No client_secret. Check environment.')
-}
-
 const refreshToken = pm.environment.get('refresh_token')
 if (!refreshToken) {
     // get refresh token using Resource Owner Password Credentials grant
+
+    const clientSecret = pm.environment.get('client_secret')
+    if (!clientSecret) {
+        throw new Error('No client_secret. Check environment.')
+    }
     
     const username = String(pm.environment.get('username'))
     if (!username) {
