@@ -123,7 +123,12 @@ pm.sendRequest({
         throw new Error('Could not refresh the access token: ' + JSON.stringify(error))
     } else if (response.json().error) {
         console.error(response.json())
-        throw new Error('Could not refresh the access token: ' + response.json().error_description + ' Delete refresh_token from environment if it is expired and retry.')
+        if (response.json().sub_error == "exptoken") {
+            pm.environment.unset("refresh_token")
+            throw new Error('Deleted expired refresh_token from environment. Please retry!')
+        } else {
+            throw new Error('Could not refresh the access token: ' + response.json().error_description + ' Delete refresh_token from environment if it is expired.')
+        }
     } else {
         // otherwise, update tokens
         const data = response.json()
