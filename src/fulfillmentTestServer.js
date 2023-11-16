@@ -23,34 +23,38 @@ const requestHandler = (request, response) => {
 
 
   if (request.method == 'POST') {
-    var body = '';
+    var requestBody = '';
   }
 
   request.on('data', function (data) {
-    body += data;
+    requestBody += data;
   });
 
   request.on('end', function () {
-    var u = new URL(request.url, `http://${request.headers.host}`);
+    const u = new URL(request.url, `http://${request.headers.host}`);
     console.log(new Date());
-    console.log("Incoming request #" + requestsTotalCount + ": " + request.method + ' on ' + request.url);
-    //console.log(u);
-    console.log("Request headers: " + JSON.stringify(request.headers));
-    if (body) {
-      console.log("Request body:", body);
+    console.log("Incoming request #" + requestsTotalCount + ": " + request.method + ' on ' + u);
+    console.log("Request headers:  " + JSON.stringify(request.headers));
+    if (requestBody) {
+      console.log("Request body:    ", requestBody);
     }
 
     let contentType = request.headers['content-type'];
+    let responseBody = '';
     if (contentType && contentType.includes('xml')) {
       response.setHeader('content-type', request.headers['content-type']);
-      response.end(buildSoapContent());
+      responseBody = buildSoapContent();
     } else {
       response.setHeader('content-type', 'application/json');
-      response.end(buildJsonContent(u, requestsTotalCount));
+      responseBody = buildJsonContent(u, requestsTotalCount);
     }
+
     console.log("Response headers: " + JSON.stringify(response.getHeaders()));
-    requestsTotalCount++;
+    console.log('Response body:   ', responseBody);
+    response.end(responseBody);
+
     console.log("");
+    requestsTotalCount++;
   });
 }
 
@@ -73,6 +77,7 @@ var buildSoapContent = function () {
   soap += '		</m:insertResponse>\n';
   soap += '	</soapenv:Body>\n';
   soap += '</soapenv:Envelope>';
+
   return soap;
 }
 
@@ -97,6 +102,5 @@ var buildJsonContent = function (u, requestsTotalCount) {
   }
 
   const body = JSON.stringify(o);
-  console.log('Response body:  ', body);
   return body;
 }
