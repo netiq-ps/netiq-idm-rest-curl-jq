@@ -40,7 +40,8 @@ const requestHandler = (request, response) => {
       console.log("Request body:", body);
     }
 
-    if (request.headers['content-type'] && request.headers['content-type'].indexOf('xml') > 0) {
+    let contentType = request.headers['content-type'];
+    if (contentType && contentType.includes('xml')) {
       response.setHeader('content-type', request.headers['content-type']);
       response.end(buildSoapContent());
     } else {
