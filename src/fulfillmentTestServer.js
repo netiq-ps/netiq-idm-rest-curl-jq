@@ -42,6 +42,7 @@ const requestHandler = (request, response) => {
        response.setHeader('content-type', 'application/json');
        response.end(buildJsonContent(u, 5, requestsTotalCount));
     }
+    console.log("Response headers: " + JSON.stringify(response.getHeaders()));
     requestsTotalCount++;
     console.log("");
   });
