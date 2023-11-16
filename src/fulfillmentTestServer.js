@@ -10,7 +10,8 @@
 const url = require('node:url');
 const http = require('http')
 const port = 3000
-var requestsTotalCount = 1;
+const { createHash } = require('node:crypto');
+
 
 const requestHandler = (request, response) => {
 //  console.log(request.url)
@@ -79,8 +80,9 @@ var buildJsonContent = function(u, totalCount, requestsTotalCount) {
 	o.pageSize = pageSize;
 
 	o.results = [];
-	for (var i=firstIndex; i<firstIndex+pageSize && i <= totalCount; i++) {
-		o.results.push({'data':'bla','id':i});
+		const hash = createHash('sha256');
+		hash.update(String(i));
+		o.results.push({'data':hash.digest('hex'),'id':i});
 	}
 
 	const body = JSON.stringify(o);
