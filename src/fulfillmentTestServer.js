@@ -78,7 +78,7 @@ var buildSoapContent = function () {
 
 var buildJsonContent = function (u, requestsTotalCount) {
   const baseIndex = u.searchParams.has('baseIndex') ? Number(u.searchParams.get('baseIndex')) : defaultBaseIndex;
-  const startIndex = Number(u.searchParams.get('startIndex'));
+  const startIndex = u.searchParams.has('startIndex') ? Number(u.searchParams.get('startIndex')) : baseIndex;
   const pageSize = u.searchParams.has('count') ? Number(u.searchParams.get('count')) : maxPageSize;
 
   const o = {};
