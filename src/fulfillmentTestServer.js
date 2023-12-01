@@ -7,7 +7,6 @@
 // Usage: node fulfillmentTestServer.js
 
 
-const url = require('node:url');
 const http = require('http')
 const port = 3000
 const { createHash } = require('node:crypto');
