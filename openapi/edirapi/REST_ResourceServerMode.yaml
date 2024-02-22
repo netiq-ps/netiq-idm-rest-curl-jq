@@ -1,28 +1,66 @@
 openapi: 3.0.0
 info:
-  version: 1.6.0
+  version: 1.7.1
   title: eDirectory REST
   description: |
-
     This document provides the list of all endpoints and their JSON request/response details of eDirectory REST API. eDirectory REST API (eDirAPI) is JSON format based ldap access application programming Interface(API) that uses HTTP(s) requests to perform ldap operations. REST is architectural style for distributed hypermedia systems. Using these APIs, web application can provide customized secure access to ldap directory. Users can view and manipulate users, groups, objects.
+  
+    For connecting with eDirAPI in headless mode, make sure you have http redirects based on location header enabled.
+    For using REST endpoints in OSP mode, the following endpoints must be called beforehand in given order:-
 
-    **Authentication:**
-    The NetIQ Identity Manager REST API uses the OAuth2 protocol for authentication. To make a REST call, you must obtain an access token, and include that token in the Authentication header. To obtain an access token, do the following:
-    1. In the OSP configuration file, edit the response-types to include password.
-    2. Add a new scope edirapi<TREENAME\>(e.g. edirapiMYTREE) in OSP configuration.
-    3. Determine where your authorization server is listening for logins. Usually it is the server base https://<osp_server_ip>:<tomcat_port>/osp/a/idm/auth/oauth2/token
-    4. Obtain OSP client identity and client password which is available in the osp configuration file.
-    5. Obtain the user name and password of the user who has the required privilege for the API you need to make a call.
-    6. Create a REST POST request with the following characteristics:
-         <br/> a. content-type header: application/x-www-form-urlencoded
-         <br/> b. authorization header: Select Basic Auth format and include OSP client identity and password.
-         <br/> c. body: \"grant_type=password&username=USERNAME&password=USERPASSWORD\", where USERNAME and PASSWORD are obtained from step 4.
-    7. The JSON response comes back like this:{\n \"access_token\": \"eHwAIIo/s5YRJUlk7vudjO3DQSHcwsubZOe...\",\n \"token_type\": \"bearer\",\n \"expires_in\": 2592001,\n \"refresh_token\": \"eHwAIMImaydGbAamBgNA1CEGcFjCXNcaqM4OA...\"\n}\n
-    8. When making further REST calls to one of the APIs, in the Authorization header select Bearer token, and include the access token obtained in step 6.
+    1. Make a HTTP GET Request to the URL: “https://{identityconsole_ip}/identityconsole/#/”
+    This will return two cookies namely "x-oidp-session" and "x-oidp-oauth2". This will also redirect you to the OSP server URL by setting "Location" header in response from which you can get the OSP server ip or domain name which can be reused in the next POST request URL. Also make sure you capture the "Location" header value as it is set as the value for "Referrer" header in the next request.
+    This will provide a 302 response and redirect it OSP URL.  Capture the Location from the response Header, this will be considered as a “Referer” for the next request. Refer the below example:
+
+    Ex:- 
     
+        Request Type: GET https://164.99.179.215:9000/identityconsole/#/
+
+        Response Code: 302
+
+        Location: https://164.99.179.230:8543/osp/a/idm/auth/oauth2/grant?redirect_uri=https://164.99.179.215:9000/eDirAPI/v1/treeidm/authcoderedirect&client_id=identityconsole&response_type=code&state=sQqUuuh6Kb5oYdskmtV1Wzt5
+
+        Note: In this example IDConsole is configured on 164.99.179.215 and it is configured with OSP at 164.99.179.230.
+
+    2. Make a HTTP POST Request to the URL: https://{osp_ip}/osp/a/idm/auth/app/login?acAuthCardId=np-contract-$default-card$&sid=0 with form data of type x-www-form-encoded:-
+    Headers:- 
     
-  
-  
+              Referer= Location capture from 1st step
+              Content-Type: application/x-www-form-encoded
+
+    Body:-    
+              
+              cexid: np-auth
+              ccancelid: false
+              option: credential
+              excludeParameterNames: g-recaptcha-response, h-captcha-response, recaptcha_response_field, recaptcha_challenge_field, option, sid, Ecom_User_ID, Ecom_Password, Ecom_Token
+              FilterAuthenticationClass.dup-res-state: 0
+              Ecom_User_ID: DN
+              Ecom_Password: password
+
+    Response Code: 303
+
+    Note: - 
+        •	Make sure you capture the RSESSIONID cookie which is returned as response to this request and set this cookie for further requests.
+        •	Some tools may require multiple redirections to achieve the RSESSIONID. User must capture the Location details from each RequestHeader and send a GET request with the Location URL.
+
+    GET Request: https://164.99.179.230:8543/osp/a/idm/auth/oauth2/authcodecontinue?sid=0&privateId=8454f385bebdaf3d1035&client_id=identityconsole&irdpkg=1689585464456-ycVAgSSCEe6T6AAMKY2R3A
+
+    Headers:
+        Referer: https://164.99.179.230:8543/osp/a/idm/auth/oauth2/grant?redirect_uri=https://164.99.179.215:9000/eDirAPI/v1/ospt/authcoderedirect&client_id=identityconsole&response_type=code&state=0Kxl3qF3z0O5TtgCXM9qd-Ev
+    
+    The request header must include ‘Referer’, captured as part of step1 for all such request.
+    
+    3. Get the anti CSRF Token (refer to GET /getanticsrftoken call in AntiCsrfToken section). The token returned in the response should be included as X-CSRF-Token header value in further calls to eDirAPI.
+    GET request to https://{HostName}:{PortName}/eDirAPI/v1/{TreeName}/getanticsrftoken
+
+    4. For further requests, make sure to set the X-CSRF-Token header with the value you were given when you made the /getanticsrftoken GET request.
+    Ex:-
+    GET request to https://{HostName}:{PortName)/eDirAPI/v1/{TreeName)/rbs/GetUserAssociatedTasks
+    Headers:- 
+              
+              X-CSRF-Token: pU8TxA25D2vIet4Be5qyM4cK
+              Cookie: RSESSIONID=MPLcFGmSIQEP5IQbrsKIEkT5lX4Vbuyvv-iEXI1OsXw=
   license:
     name: Commercial
 servers:
@@ -36,12 +74,14 @@ servers:
       identifier:
         default: eDirAPI
 paths:
-  /schema/syntaxes:
+  /:
     get:
-      summary: List all Syntaxes
+      summary: List all the endpoints. Note that the url should be until port number. e.g.,https://10.10.10.10:9000/
       tags:
-        - Syntaxes
-      operationId: listSyntaxes
+        - Initialize
+      operationId: initialize
+      security:
+        - cookieAuth: []
       parameters:
         - in: header
           name: Content-Type
@@ -50,6 +90,49 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
+      responses:
+        '200':
+          description: List of all endpoints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndpointsList'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /schema/syntaxes:
+    get:
+      summary: List all Syntaxes
+      tags:
+        - Syntaxes
+      operationId: listSyntaxes
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
       responses:
         '200':
           description: List of all syntaxes
@@ -69,6 +152,8 @@ paths:
       tags:
         - Syntaxes
       operationId: getSyntax
+      security:
+        - cookieAuth: []
       parameters:
         - in: header
           name: Content-Type
@@ -77,6 +162,13 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
         - name: id
           in: path
           required: true
@@ -105,6 +197,8 @@ paths:
       tags:
         - Attributes
       operationId: listAttributes
+      security:
+        - cookieAuth: []
       parameters:
         - in: header
           name: Content-Type
@@ -113,6 +207,13 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
       responses:
         '200':
           description: List of all attributes
@@ -138,6 +239,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AttributePost'
+      security:
+        - cookieAuth: []
       parameters:
         - in: header
           name: Content-Type
@@ -146,6 +249,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
       responses:
         '201':
           description: Attribute created
@@ -167,6 +284,8 @@ paths:
       tags:
         - Attributes
       operationId: getAttribute
+      security:
+        - cookieAuth: []
       parameters:
         - in: header
           name: Content-Type
@@ -175,6 +294,13 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
         - name: name
           in: path
           required: true
@@ -210,12 +336,28 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: name
           in: path
           required: true
           description: The name of the attribute
           schema:
             type: string
+      security:
+        - cookieAuth: []
       responses:
         '204':
           description: Deletion success
@@ -233,6 +375,8 @@ paths:
       tags:
         - ObjectClasses
       operationId: listObjectClass
+      security:
+        - cookieAuth: []
       parameters:
         - in: header
           name: Content-Type
@@ -241,6 +385,13 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
       responses:
         '200':
           description: List of all ObjectClasses
@@ -267,6 +418,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
       requestBody:
         description: The attribute definition
         required: true
@@ -274,6 +439,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ObjectClassPost'
+      security:
+        - cookieAuth: []
       responses:
         '201':
           description: ObjectClass created
@@ -298,10 +465,24 @@ paths:
         - in: header
           name: Content-Type
           required: true
-          description: The media type of the resource.
+          description: The media type of the resource
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
       requestBody:
         description: The attribute definition
         required: true
@@ -309,6 +490,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ObjectClassPost'
+      security:
+        - cookieAuth: []
       responses:
         '201':
           description: ObjectClass updated
@@ -330,6 +513,8 @@ paths:
       tags:
         - ObjectClasses
       operationId: getObjectClass
+      security:
+        - cookieAuth: []
       parameters:
         - in: header
           name: Content-Type
@@ -338,6 +523,13 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
         - name: name
           in: path
           required: true
@@ -372,12 +564,28 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token.
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: name
           in: path
           required: true
           description: The name of the ObjectClass
           schema:
             type: string
+      security:
+        - cookieAuth: []
       responses:
         '204':
           description: Deletion success
@@ -391,10 +599,12 @@ paths:
                 $ref: '#/components/schemas/Error'
   /session:
     get:
-      summary: Find if session is valid
+      summary: Find if session is valid. Please note that url should not include treename, e.g., https://10.10.10.10:8000/eDirAPI/v1/session
       tags:
         - Session
       operationId: validateSession
+      security:
+        - cookieAuth: []
       parameters:
         - in: header
           name: Content-Type
@@ -403,6 +613,13 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
       responses:
         '200':
           description: Session definition
@@ -414,12 +631,191 @@ paths:
           description: Bad request
         '401':
           description: Unauthorized
-  '/{resource DN}/search':
     post:
-      summary: Create a search request
+      summary: Create a session - Login. Please note that url should not include treename, e.g., https://10.10.10.10:8000/eDirAPI/v1/session
+      tags:
+        - Session
+      operationId: createSession
+      parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
+      requestBody:
+        description: Data required for a session
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionPost'
+      security: []
+      responses:
+        '201':
+          description: Session created
+          headers:
+            Set-Cookie:
+              description: >-
+                Session cookie set. This should be returned in X-RSESSION
+                header.
+              schema:
+                type: string
+                example: RSESSIONID=B9344BA; Path=/; HttpOnly; Secure
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a session - Logout. Please note that url should not include treename, e.g., https://10.10.10.10:8000/eDirAPI/v1/session
+      tags:
+        - Session
+      operationId: deleteSession
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
+      responses:
+        '204':
+          description: Deletion success
+        '401':
+          description: Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/getanticsrftoken':
+    get:
+      summary : Generate the aticsrftoken and provide the Generated token in the header name "X-CSRF-Token" for the next requests. Call this endpoint once just after session creation.
+      tags:
+        - AntiCsrfToken
+      operationId: getanicsrftoken
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: antiCSRF token success
+          content:
+            string:
+              example: HuyS8gAPgtfzE4KhUXzNHJzB
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'      
+  '/{base DN}/search':
+    post:
+      summary: Create a search request. Note that in case of tree root as the base, just use '/search' without any extra empty '/' characters in the url. Ex:- 'https://10.71.36.58:9000/eDirAPI/v1/{treename}/search' for root search, 'https://10.71.36.58:9000/eDirAPI/v1/{treename}/{dn}/search' for base dn search.
       tags:
         - Search
       operationId: createSearch
+      requestBody:
+        description: Parameters of the search request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaginatedSearchRequest'
+      parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
+        - name: base DN
+          in: path
+          required: true
+          description: The resource DN of the base entry
+          schema:
+            type: string
+            example: o=alice%2Fcn=bob
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Search response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultSet'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  '/{base DN}/vlvSearch':
+    post:
+      summary: Create a vlv search request. Note that in case of tree root as the base, /vlvSearch should be used.
+      tags:
+        - Search
+      operationId: createVLVSearch
       requestBody:
         description: Parameters of the search request
         required: true
@@ -435,13 +831,29 @@ paths:
           schema:
             type: string
             example: application/json
-        - name: resource DN
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
+        - name: base DN
           in: path
           required: true
-          description: The resource DN of the entry
+          description: The resource DN of the base entry
           schema:
             type: string
             example: o=alice%2Fcn=bob
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: Search response
@@ -474,6 +886,13 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
         - name: resource DN
           in: path
           required: true
@@ -481,6 +900,8 @@ paths:
           schema:
             type: string
             example: o=alice%2Fcn=bob
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: Entry read success
@@ -516,6 +937,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: container DN
           in: path
           required: true
@@ -530,6 +965,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EntryPost'
+      security:
+        - cookieAuth: []
       responses:
         '201':
           description: Entry created
@@ -559,6 +996,13 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
         - name: resource DN
           in: path
           required: true
@@ -566,6 +1010,8 @@ paths:
           schema:
             type: string
             example: o=alice%2Fcn=bob
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: Entry definition
@@ -595,6 +1041,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token.
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: resource DN
           in: path
           required: true
@@ -602,6 +1062,8 @@ paths:
           schema:
             type: string
             example: o=alice%2Fcn=bob
+      security:
+        - cookieAuth: []
       responses:
         '204':
           description: Deletion success
@@ -626,6 +1088,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: resource DN
           in: path
           required: true
@@ -640,6 +1116,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Patch'
+      security:
+        - cookieAuth: []
       responses:
         '204':
           description: Modification success
@@ -660,7 +1138,7 @@ paths:
         - Resource Management
       operationId: moveEntry
       requestBody:
-        description: 'The entry move, rename and/or copy data in JSON format.'
+        description: 'The entry move, rename and/or copy data in JSON format'
         required: true
         content:
           application/json:
@@ -674,6 +1152,22 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
+      security:
+        - cookieAuth: []
       responses:
         '204':
           description: Operation success
@@ -701,6 +1195,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: resource DN
           in: path
           required: true
@@ -715,6 +1223,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Compare'
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: Comparison done
@@ -745,6 +1255,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: resource DN
           in: path
           required: true
@@ -752,6 +1276,8 @@ paths:
           schema:
             type: string
             example: o=alice%2Fcn=bob   
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: List of attributes and corresponding privileges
@@ -775,7 +1301,7 @@ paths:
     post:
       summary: Split the Partitons rooted at DN from  parent partition
       tags:
-        - Partition And Replica         
+        - Partition And Replica      
       operationId: splitPartions
       requestBody:
         description: Split the  partitions 
@@ -785,6 +1311,27 @@ paths:
             schema:
               $ref: '#/components/schemas/SplitRequest'
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: partition DN
           in: path
           required: true
@@ -813,7 +1360,7 @@ paths:
     post:
       summary: Merge the Partitons rooted at DN with parent partition
       tags:
-        - Partition And Replica         
+        - Partition And Replica       
       operationId: mergePartions
       requestBody:
         description: Merge the splited partitions 
@@ -823,6 +1370,27 @@ paths:
             schema:
               $ref: '#/components/schemas/MergeRequest'
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: partition DN
           in: path
           required: true
@@ -850,7 +1418,7 @@ paths:
     post:
       summary: Add Replica 
       tags:
-        - Partition And Replica         
+        - Partition And Replica       
       operationId: addReplica
       requestBody:
         description: add a new Replica 
@@ -866,6 +1434,27 @@ paths:
             schema:
               $ref: '#/components/schemas/addReplicaRequest'
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: partition DN
           in: path
           required: true
@@ -893,7 +1482,7 @@ paths:
     post:
       summary: Change the type of Replica to the new type specifies by replica type
       tags:
-        - Partition And Replica         
+        - Partition And Replica       
       operationId: changeReplica
       requestBody:
         description: Change the Replica type             
@@ -909,6 +1498,27 @@ paths:
             schema:
               $ref: '#/components/schemas/changeReplicaRequest'
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: partition DN
           in: path
           required: true
@@ -934,9 +1544,9 @@ paths:
 
   '/{partition DN}/removeReplica':
     post:
-      summary: Remove the present  Replica
+      summary: Remove the present  Replica 
       tags:
-        - Partition And Replica         
+        - Partition And Replica       
       operationId: RemoveReplica
       requestBody:
         description:  Remove the Replica 
@@ -952,6 +1562,27 @@ paths:
             schema:
               $ref: '#/components/schemas/removeReplicaRequest'
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: partition DN
           in: path
           required: true
@@ -975,11 +1606,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  '/{partition DN}/getReplicaInfo   ':
+  '/{partition DN}/getReplicaInfo':
     post:
       summary: Get the  Replica Information
       tags:
-        - Partition And Replica         
+        - Partition And Replica       
       operationId: getReplicaInfo
       requestBody:
         description: Get Replica Information 
@@ -995,6 +1626,27 @@ paths:
             schema:
               $ref: '#/components/schemas/getReplicaInfoRequest'
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: partition DN
           in: path
           required: true
@@ -1024,11 +1676,32 @@ paths:
 
   '/{server DN}/listReplica':
     get:
-      summary: List Of Replica that reside on specific server 
+      summary: List Of Replica that reside on specific server
       tags:
-        - Partition And Replica         
+        - Partition And Replica       
       operationId: listReplica
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: server DN
           in: path
           required: true
@@ -1055,7 +1728,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-                
   '/{server DN}/setReplicaFilter':
     post:
       summary: Set the Filter on the server
@@ -1070,6 +1742,27 @@ paths:
             schema:
               $ref: '#/components/schemas/setReplicaFilterRequest'
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: server DN
           in: path
           required: true
@@ -1100,6 +1793,27 @@ paths:
       - Partition And Replica
       operationId: getReplicaFilter
       parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port      
         - name: server DN
           in: path
           required: true
@@ -1125,9 +1839,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'      
-      
-                            
+                $ref: '#/components/schemas/Error'
+                
   '/{resource DN}/passwordModify':
     post:
       summary: LDAP Password Modify Extended Operation
@@ -1135,7 +1848,7 @@ paths:
         - Resource Management
       operationId: PasswordModifyExtended
       requestBody:
-        description: oldpassword and newPassword will be present in the request body and UserIdentity will be passed in the URL as resource DN. oldpassword and newPassword will be in base64 encoded format.
+        description: oldpassword and newPassword will be present in the request body and UserIdentity will be passed in the URL as resource DN. oldpassword and newPassword will be in base64 encoded format
         required: true
         content:
           application/json:
@@ -1149,6 +1862,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: resource DN
           in: path
           required: true
@@ -1156,6 +1883,8 @@ paths:
           schema:
             type: string
             example: o=alice%2Fcn=bob    
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: password modify success
@@ -1202,6 +1931,20 @@ paths:
           schema:
             type: string
             example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
         - name: server DN
           in: path
           required: true
@@ -1209,6 +1952,8 @@ paths:
           schema:
             type: string
             example: o=alice%2Fcn=SLES11SP3server
+      security:
+        - cookieAuth: []
       responses:
         '200':
           description: Limber process trigerred successfully
@@ -1224,7 +1969,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-                
+
   "/pki/serverCertificates/createCertificate":
     post:
       summary: Create the Server Certificate
@@ -3246,10 +3991,10 @@ paths:
                 $ref: "#/components/schemas/Error"
 components:
   securitySchemes:
-    OSPBearer:
-      type: http
-      scheme: bearer
-      bearerFormat: Bearer Authorization token from OSP
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: RSESSIONID
   schemas:
     Error:
       type: object
@@ -3342,14 +4087,14 @@ components:
           type: array
           items:
             type: string
-            description: flag is used for restricting the attribute usage in objectClasses.
+            description: flag is used for restricting the attribute usage in objectClasses
             enum:
               - single-value
               - no-user-modification
               - collective
         usage:
           type: string
-          description:  It indicates how the attribute type is to be used
+          description:  It indicates how the attribute type is to be used.
           enum:
             - userApplications
             - directoryOperation
@@ -3366,6 +4111,21 @@ components:
         syntax: /eDirAPI%2Fv1%2Ftree_name%2Fschema%2Fsyntaxes%2F1361411466115121140
         upperlimit: 128
         usage: directoryOperation
+        
+    EndpointsList:
+      type: array
+      description: Array of endpoints
+      items:
+        type: string
+      example:
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fschema%2Fsyntaxes"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fschema%2Fattributes"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fschema%2FobjectClasses"
+        - "/eDirAPI%2Fv1%2Ftree_name%2F"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fsession"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fospconfig"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fgetanticsrftoken"
+        
     AttributePost:
       type: object
       properties:
@@ -3402,7 +4162,7 @@ components:
           description: Upper limit if defined
         flags:
           type: array
-          description: flag is used for restricting the attribute usage in objectClasses
+          description: flag is used for restricting the attribute usage in objectClasses.
           items:
             type: string
             enum:
@@ -3465,12 +4225,12 @@ components:
             - AUXILIARY
         must:
           type: array
-          description: Array of attribute which must be present
+          description: Array of attribute which must be present.
           items:
             type: string
         may:
           type: array
-          description: Array of attribute which may be present
+          description: Array of attribute which may be present.
           items:
             type: string
         extensions:
@@ -3653,6 +4413,39 @@ components:
       required:
         - dn
         - attributes
+    SessionPost:
+      type: object
+      description: JSON Representation of parameters of a session
+      properties:
+        dn:
+          type: string
+          description: The DN as a relative URI
+          example: /eDirAPI%2Fv1%2Fo=alice%2Fcn=bob
+        password:
+          type: string
+          description: The password as a string - this is not displayed back in a GET
+        ldapserver:
+          type: string
+          description: ldapserver's IP/DNS Name (Note- Add port as well if default port(636) is not used)
+          example: 10.10.10.10
+        end_time:
+          type: string
+          description: The end_time as time format applicable for this session
+          example: '2019-05-17T14:44:29.006584692+05:30'
+      required:
+        - dn
+        - password
+        - ldapserver
+    InitializePost:
+      type: object
+      description: JSON Representation of parameters for initialization
+      properties:
+        ldapserver:
+          type: string
+          description: ldapserver IP/DNS Name
+          example: 10.71.21.34
+      required:
+        - ldapserver
     Session:
       type: object
       description: JSON Representation of parameters of a session
@@ -3665,6 +4458,11 @@ components:
           type: string
           description: The end_time as time format applicable for this session
           example: '2019-05-17T14:44:29.006584692+05:30'
+        treeName:
+          type: string
+          description: Tree name
+          example: 'tree1'
+        
     Patch:
       type: array
       items:
@@ -3717,7 +4515,7 @@ components:
             object is moving under another parent
         newsuperior:
           type: string
-          description: The DN of the new parent entry under which this object will move to.
+          description: The DN of the new parent entry under which this object will move to
           example: '%2Fo=eve%2F'
       required:
         - dn
@@ -3742,6 +4540,37 @@ components:
       required:
         - attribute
         - values
+    
+    PaginatedSearchRequest:
+      type: object
+      description: A search request in JSON format
+      properties:
+        scope:
+          type: string
+          description: The Scope of the search
+          enum:
+            - base
+            - one
+            - sub
+        filter:
+          type: string
+          description: LDAP style filter
+          example: >-
+            (|(&(objectClass=inetOrgPerson)(groupMembership=cn=group,o=metropolis))(cn=u*))
+        attributes:
+          type: array
+          description: List of attributes to be returned
+          items:
+            type: string
+          example:
+            - cn
+            - sn
+            - meta.structuralObjectClass
+        page_size:
+          type: integer
+          description: Number of items per page
+          example: 10
+  
     SearchRequest:
       type: object
       description: A search request in JSON format
@@ -3850,7 +4679,7 @@ components:
       properties:
         oldpassword:
           type: string
-          description: The oldpassword value, if present, will contain the user's current password in base64 encoded format
+          description: The oldpassword value, if present, will contain the user's current password in base64 encoded format.
           example: MTIzNDU=
         newpassword:
           type: string
@@ -3875,19 +4704,19 @@ components:
           properties:
             compare:
               type: boolean
-              description: Trustee has compare rights to the attribute
+              description: Trustee has compare rights to the attribute.
               example: true
             read:
               type: boolean
-              description: Trustee has read rights to the attribute
+              description: Trustee has read rights to the attribute.
               example: true  
             write:
               type: boolean
-              description: Trustee has write rights to the attribute
+              description: Trustee has write rights to the attribute.
               example: true
             self:
               type: boolean
-              description: Trustee can add or delete its name as a value of the attribute.
+              description: Trustee can add or delete its name as a value of the attribute
               example: true
             supervisor:
               type: boolean
@@ -3899,7 +4728,7 @@ components:
               example: false
     PasswordModifyResponse:
       type: object
-      description: It will contain code, message as well as newpassword. If in request newpassword is absent, then only newpassword will be present in response.
+      description: It will contain code, message as well as newpassword. If in request newpassword is absent, then only newpassword will be present in response
       properties:
         code:
           type: integer
@@ -3913,7 +4742,7 @@ components:
           type: string
           description: The newpassword value, will contain the desired password for this user in base64 encoded format
           example: NTQzMjE=
-         
+
     triggerLimberPost:
       type: object
           
@@ -4012,9 +4841,9 @@ components:
       type: array 
       items: 
             type: string
-      description: give the list of replica present in that server
       example:
-        - o = novell     
+        - o=novell
+      description: give the list of replica present in that server
     
     getReplicaInfoResponse:    
       type: object
@@ -4050,7 +4879,7 @@ components:
         Flags:
           type: integer
           format: int64
-          example: 0      
+          example: 0
     setReplicaFilterRequest:
       type: object
       description: Get Set Filter Replica request
@@ -4094,6 +4923,7 @@ components:
             example:
               - ACL
               - backLink 
+  
     GetRequest:
       type: object
       description: Certificate Request
@@ -5486,8 +6316,4 @@ components:
           type: string
           description: DN of the server
           example: ".CN=sles12sp2-bob-90180-s4.OU=msr.O=novell.T=SLES12SP2-BOB-90180."
-          
-security:
-  - OSPBearer: []
-         
-        
+
