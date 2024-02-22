@@ -1,8 +1,15 @@
 openapi: 3.0.0
 info:
-  version: 1.3.0
+  version: 1.4.1
   title: eDirectory REST
-  description: This document provides the list of all endpoints and their JSON request/response details of eDirectory REST API. eDirectory REST API (eDirAPI) is JSON format based ldap access application programming Interface(API) that uses HTTP(s) requests to perform ldap operations. REST is architectural style for distributed hypermedia systems. Using these APIs, web application can provide customized secure access to ldap directory. Users can view and manipulate users, groups, objects.
+  description: |
+    This document provides the list of all endpoints and their JSON request/response details of eDirectory REST API. eDirectory REST API (eDirAPI) is JSON format based ldap access application programming Interface(API) that uses HTTP(s) requests to perform ldap operations. REST is architectural style for distributed hypermedia systems. Using these APIs, web application can provide customized secure access to ldap directory. Users can view and manipulate users, groups, objects.
+  
+    **Endpoints Flow:**
+    For using REST endpoints, the following endpoints must be called beforehand in given order:
+    1. Create Session(refer to POST /session call in Session section). Please note that treename is removed in urls for all the session endpoints (e.g., https://10.10.10.10:8000/eDirAPI/v1/session).
+    2. Initialize(refer to GET / call in Initialize section).
+    3. Get Anti CSRF Token(refer to GET /getanticsrftoken call in AntiCsrfToken section). The token returned in the reponse should be included as X-CSRF-Token header in further calls.
   license:
     name: Commercial
 servers:
@@ -16,6 +23,42 @@ servers:
       identifier:
         default: eDirAPI
 paths:
+  /:
+    get:
+      summary: List all the endpoints. Note that the url should be until port number. e.g.,https://10.10.10.10:9000/
+      tags:
+        - Initialize
+      operationId: initialize
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
+      responses:
+        '200':
+          description: List of all endpoints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndpointsList'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /schema/syntaxes:
     get:
       summary: List all Syntaxes
@@ -505,7 +548,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /session:
     get:
-      summary: Find if session is valid
+      summary: Find if session is valid. Please note that url should not include treename, e.g., https://10.10.10.10:8000/eDirAPI/v1/session
       tags:
         - Session
       operationId: validateSession
@@ -538,7 +581,7 @@ paths:
         '401':
           description: Unauthorized
     post:
-      summary: Create a session - Login
+      summary: Create a session - Login. Please note that url should not include treename, e.g., https://10.10.10.10:8000/eDirAPI/v1/session
       tags:
         - Session
       operationId: createSession
@@ -587,7 +630,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     delete:
-      summary: Delete a session - Logout
+      summary: Delete a session - Logout. Please note that url should not include treename, e.g., https://10.10.10.10:8000/eDirAPI/v1/session
       tags:
         - Session
       operationId: deleteSession
@@ -654,12 +697,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'      
-  '/{resource DN}/search':
+  '/{base DN}/search':
     post:
-      summary: Create a search request
+      summary: Create a search request. Note that in case of tree root as the base, /search should be used.
       tags:
         - Search
       operationId: createSearch
+      requestBody:
+        description: Parameters of the search request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaginatedSearchRequest'
+      parameters:
+        - in: header
+          name: Content-Type
+          required: true
+          description: The media type of the resource
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          description: The anti-CSRF token
+          schema:
+            type: string
+            example: HuyS8gAPgtfzE4KhUXzNHJzB
+        - in: header
+          name: Origin
+          required: true
+          description: The Origin header for anti-CSRF
+          schema:
+            type: string
+            example: https://hostname:port
+        - name: base DN
+          in: path
+          required: true
+          description: The resource DN of the base entry
+          schema:
+            type: string
+            example: o=alice%2Fcn=bob
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Search response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResultSet'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  '/{base DN}/vlvSearch':
+    post:
+      summary: Create a vlv search request. Note that in case of tree root as the base, /vlvSearch should be used.
+      tags:
+        - Search
+      operationId: createVLVSearch
       requestBody:
         description: Parameters of the search request
         required: true
@@ -689,10 +794,10 @@ paths:
           schema:
             type: string
             example: https://hostname:port
-        - name: resource DN
+        - name: base DN
           in: path
           required: true
-          description: The resource DN of the entry
+          description: The resource DN of the base entry
           schema:
             type: string
             example: o=alice%2Fcn=bob
@@ -1814,7 +1919,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  "/pki/servercertificates/createCertificate":
+  "/pki/serverCertificates/createCertificate":
     post:
       summary: Create the Server Certificate
       tags:
@@ -1865,7 +1970,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  "/pki/servercertificates/importCertificate":
+  "/pki/serverCertificates/importCertificate":
     post:
       summary: Create the Server Certificate with import method
       tags:
@@ -1916,7 +2021,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  "/pki/servercertificates/backupCertificate":
+  "/pki/serverCertificates/backupCertificate":
     post:
       summary: Backup the server certificate
       tags:
@@ -1967,7 +2072,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  "/pki/servercertificates/exportCertificate":
+  "/pki/serverCertificates/exportCertificate":
     post:
       summary: Export the server certificate
       tags:
@@ -2426,7 +2531,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  "/pki/usercertificates/createCertificate":
+  "/pki/userCertificates/createCertificate":
     post:
       summary: Create the user Certificate
       tags:
@@ -2477,7 +2582,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  "/pki/usercertificates/backupCertificate":
+  "/pki/userCertificates/backupCertificate":
     post:
       summary: Backup the user certificate
       tags:
@@ -2528,7 +2633,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  "/pki/usercertificates/exportCertificate":
+  "/pki/userCertificates/exportCertificate":
     post:
       summary: Export the user certificate
       tags:
@@ -2630,7 +2735,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  "/pki/usercertificates/importCertificate":
+  "/pki/userCertificates/importCertificate":
     post:
       summary: Create the User Certificate with import method
       tags:
@@ -3955,6 +4060,21 @@ components:
         syntax: /eDirAPI%2Fv1%2Ftree_name%2Fschema%2Fsyntaxes%2F1361411466115121140
         upperlimit: 128
         usage: directoryOperation
+        
+    EndpointsList:
+      type: array
+      description: Array of endpoints
+      items:
+        type: string
+      example:
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fschema%2Fsyntaxes"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fschema%2Fattributes"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fschema%2FobjectClasses"
+        - "/eDirAPI%2Fv1%2Ftree_name%2F"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fsession"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fospconfig"
+        - "/eDirAPI%2Fv1%2Ftree_name%2Fgetanticsrftoken"
+        
     AttributePost:
       type: object
       properties:
@@ -4249,10 +4369,14 @@ components:
         dn:
           type: string
           description: The DN as a relative URI
-          example: /eDirAPI%2Fv1%2Ftree_name%2Fo=alice%2Fcn=bob
+          example: /eDirAPI%2Fv1%2Fo=alice%2Fcn=bob
         password:
           type: string
           description: The password as a string - this is not displayed back in a GET
+        ldapserver:
+          type: string
+          description: ldapserver's IP/DNS Name (Note- Add port as well if default port(636) is not used)
+          example: 10.10.10.10
         end_time:
           type: string
           description: The end_time as time format applicable for this session
@@ -4260,6 +4384,16 @@ components:
       required:
         - dn
         - password
+    InitializePost:
+      type: object
+      description: JSON Representation of parameters for initialization
+      properties:
+        ldapserver:
+          type: string
+          description: ldapserver IP/DNS Name
+          example: 10.71.21.34
+      required:
+        - ldapserver
     Session:
       type: object
       description: JSON Representation of parameters of a session
@@ -4272,6 +4406,11 @@ components:
           type: string
           description: The end_time as time format applicable for this session
           example: '2019-05-17T14:44:29.006584692+05:30'
+        treeName:
+          type: string
+          description: Tree name
+          example: 'tree1'
+        
     Patch:
       type: array
       items:
@@ -4349,6 +4488,37 @@ components:
       required:
         - attribute
         - values
+    
+    PaginatedSearchRequest:
+      type: object
+      description: A search request in JSON format
+      properties:
+        scope:
+          type: string
+          description: The Scope of the search
+          enum:
+            - base
+            - one
+            - sub
+        filter:
+          type: string
+          description: LDAP style filter
+          example: >-
+            (|(&(objectClass=inetOrgPerson)(groupMembership=cn=group,o=metropolis))(cn=u*))
+        attributes:
+          type: array
+          description: List of attributes to be returned
+          items:
+            type: string
+          example:
+            - cn
+            - sn
+            - meta.structuralObjectClass
+        page_size:
+          type: integer
+          description: Number of items per page
+          example: 10
+  
     SearchRequest:
       type: object
       description: A search request in JSON format
