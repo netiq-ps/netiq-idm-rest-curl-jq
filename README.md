@@ -43,6 +43,17 @@ com.example.playground.clientPass = RUV4kYdFttA3C4hm5eltow==:vrWF02aufnZQeL9toAJ
 
 Restart OSP.
 
+#### Public client
+
+For public clients you need to specifiy a redirect URL to enable implicit or code flows.
+
+```properties
+com.example.playground.redirect.url = https://www.example.com/playground/authcoderedirect
+com.example.playground.logout.url = https://www.example.com/playground/logoutredirect
+com.example.playground.logout.return-param-name = logoutURL
+com.example.playground.response-types = code,token
+```
+
 ### User
 
 In addition to an OAuth client, you also need a user in the Identity Vault. We will be using the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3), so you need the user's username and its password. To be able to call some of the endpoints shown here, the user must have administrative privileges.
