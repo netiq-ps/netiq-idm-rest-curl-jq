@@ -1,15 +1,37 @@
 openapi: 3.0.0
 info:
-  version: 1.4.1
+  version: 1.7.0
   title: eDirectory REST
   description: |
     This document provides the list of all endpoints and their JSON request/response details of eDirectory REST API. eDirectory REST API (eDirAPI) is JSON format based ldap access application programming Interface(API) that uses HTTP(s) requests to perform ldap operations. REST is architectural style for distributed hypermedia systems. Using these APIs, web application can provide customized secure access to ldap directory. Users can view and manipulate users, groups, objects.
   
-    **Endpoints Flow:**
-    For using REST endpoints, the following endpoints must be called beforehand in given order:
-    1. Create Session(refer to POST /session call in Session section). Please note that treename is removed in urls for all the session endpoints (e.g., https://10.10.10.10:8000/eDirAPI/v1/session).
-    2. Initialize(refer to GET / call in Initialize section).
-    3. Get Anti CSRF Token(refer to GET /getanticsrftoken call in AntiCsrfToken section). The token returned in the reponse should be included as X-CSRF-Token header in further calls.
+    For connecting with eDirAPI in headless mode, make sure you have http redirects based on location header enabled.
+    For using REST endpoints, the following endpoints must be called beforehand in given order:-
+
+    1. Create session for eDirAPI using the /session endpoint with HTTP POST request (refer to POST /session call in Session section). Please note that tree name is removed in URLs for all the session endpoints (e.g., https://10.10.10.10:8000/eDirAPI/v1/session). It will send session cookie named "RSESSIONID" which is required for further communication with eDirAPI.
+    Ex:- 
+    POST request to https://{HostName}:{PortName}/eDirAPI/v1/session
+    POST request to https://164.99.179.228:9000/eDirAPI/v1/session
+    Headers:-
+    
+              Content-Type: application/json
+              Origin: https://164.99.179.228:9000
+    Body:- 
+    
+        {"dn":"o=novell\/cn=admin","password":"novell","ldapserver":"164.99.179.228:636"}
+    On successful creation response code of 200 is returned along with RSESSIONID cookie.
+    Note:- Make sure you capture the RSESSIONID cookie which is returned as response to this request and set this cookie for further requests.
+
+    2. Get the anti CSRF Token (refer to GET /getanticsrftoken call in AntiCsrfToken section). The token value returned in the response should be included as X-CSRF-Token header value in further calls to eDirAPI.
+    GET request to https://{HostName}:{PortName}/eDirAPI/v1/{TreeName}/getanticsrftoken
+
+    3. For further requests, make sure to set the X-CSRF-Token header with the value you were given when you made the /getanticsrftoken GET request.
+    Ex:-
+    GET request to https://{HostName}:{PortName)/eDirAPI/v1/{TreeName)/rbs/GetUserAssociatedTasks
+    Headers:- 
+    
+              X-CSRF-Token: pU8TxA25D2vIet4Be5qyM4cK
+              Cookie: RSESSIONID=MPLcFGmSIQEP5IQbrsKIEkT5lX4Vbuyvv-iEXI1OsXw=
   license:
     name: Commercial
 servers:
@@ -699,7 +721,7 @@ paths:
                 $ref: '#/components/schemas/Error'      
   '/{base DN}/search':
     post:
-      summary: Create a search request. Note that in case of tree root as the base, /search should be used.
+      summary: Create a search request. Note that in case of tree root as the base, just use '/search' without any extra empty '/' characters in the url. Ex:- 'https://10.71.36.58:9000/eDirAPI/v1/{treename}/search' for root search, 'https://10.71.36.58:9000/eDirAPI/v1/{treename}/{dn}/search' for base dn search.
       tags:
         - Search
       operationId: createSearch
@@ -4384,6 +4406,7 @@ components:
       required:
         - dn
         - password
+        - ldapserver
     InitializePost:
       type: object
       description: JSON Representation of parameters for initialization
